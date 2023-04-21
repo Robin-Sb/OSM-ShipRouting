@@ -18,16 +18,10 @@ endif()
 
 include_directories(${OSMIUM_INCLUDE_DIRS})
 
-#add_subdirectory(lib/libosmpdf)
-add_executable(osm src/main.cpp)
-# add_library(osmpbfreader INTERFACE)
-# target_include_directories(osmpbfreader INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/lib)
-# target_include_directories(osm INTERFACE {lib})
-
-#target_include_directories(osmpbfreader INTERFACE {lib/libosmpbf/include/libosmpbfreader})
-#add_subdirectory(lib)
+set(SOURCES src/main.cpp src/PBFReader.h src/PBFReader.cpp)
+add_executable(osm ${SOURCES})
+target_include_directories(osm PRIVATE ${CMAKE_SOURCE_DIR}/src)
 target_link_libraries(osm -lz -pthread)
-
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})

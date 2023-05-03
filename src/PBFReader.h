@@ -4,6 +4,7 @@
 #include <osmium/osm/way.hpp>
 #include <iostream>
 #include <osmium/handler.hpp>
+#include <unordered_map>
 
 class Node {
     public:
@@ -11,6 +12,21 @@ class Node {
         float lat;
         float lng;
         int id;
+
+        bool operator == (const Node& otherNode) const {
+            if (this->lat == otherNode.lat && this->lng == otherNode.lng) 
+                return true;
+            return false;
+        }
+
+        struct HashFunction {
+            size_t operator()(const Node& node) const {
+                size_t latHash = std::hash<float>()(node.lat);
+                size_t lngHash = std::hash<float>()(node.lng) << 1;
+                return latHash ^ lngHash;
+            }
+        };
+    
 };
 
 class SingleCoast {

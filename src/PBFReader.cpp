@@ -22,10 +22,6 @@ CoastlineStitcher::CoastlineStitcher(std::vector<SingleCoast> _coastlines) {
 }
 
 std::vector<SingleCoast> CoastlineStitcher::stitchCoastlines() {
-    // std::unordered_map<int, int> processedCoastlines;
-    // std::vector<SingleCoast> updatedCoastlines;
-    // std::vector<bool> isCLActive;
-
     for (int i = 0; i < coastlines.size(); i++) {
         processSingleCoastline(i);
     }

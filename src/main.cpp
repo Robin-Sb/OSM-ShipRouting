@@ -16,7 +16,7 @@ using index_type = osmium::index::map::FlexMem<osmium::unsigned_object_id_type, 
 // The location handler always depends on the index type
 using location_handler_type = osmium::handler::NodeLocationsForWays<index_type>;
 
-std::vector<SingleCoast> merge_coastline2(std::vector<SingleCoast> coastlines) {
+std::vector<SingleCoast> merge_coastlines(std::vector<SingleCoast> coastlines) {
     std::unordered_map<int, int> processedCoastlines;
     std::vector<SingleCoast> updatedCoastlines;
     std::vector<bool> isCLActive;
@@ -62,6 +62,7 @@ std::vector<SingleCoast> merge_coastline2(std::vector<SingleCoast> coastlines) {
                     // it kind of does not matter what is erased here, none of these will be called later and they map to the same path anyways
                     processedCoastlines.erase(coastlines[i].path[0].id);
                     processedCoastlines.erase(updatedCoastlines[coastIndexEnd].path[0].id);
+                    // only finished coastlines are set to active
                     isCLActive[coastIndexStart] = true;
                     continue;
                 }
@@ -81,9 +82,6 @@ std::vector<SingleCoast> merge_coastline2(std::vector<SingleCoast> coastlines) {
                 processedCoastlines.erase(coastlines[i].path[coastlines[i].path.size() - 1].id);
                 processedCoastlines.erase(updatedCoastlines[coastIndexEnd].path[0].id);
                 processedCoastlines.insert(std::make_pair(updatedCoastlines[coastIndexEnd].path[0].id, coastIndexStart));
-                // disable coastIndexEnd
-                // isCLActive[coastIndexStart] = true;
-                // isCLActive[coastIndexEnd] = false;
             } else {
                 std::vector<Node> newPath;
                 for (int j = 0; j < coastlines[i].path.size(); j++) {
@@ -106,70 +104,6 @@ std::vector<SingleCoast> merge_coastline2(std::vector<SingleCoast> coastlines) {
             result.push_back(updatedCoastlines[i]);
     }
     return result;
-}
-
-
-std::vector<SingleCoast> merge_coastline(std::vector<SingleCoast> coastlines) {
-    // Assumption: Always the last node and has always the same ID
-    std::unordered_map<int, int> endnodes;
-    //std::unordered_map<Node, int, Node::HashFunction> vertices;
-    std::vector<SingleCoast> newCoastlines;
-    std::vector<bool> isCLActive;
-    for (int i = 0; i < coastlines.size(); i++) {
-        int pathLength = coastlines[i].path.size();
-        if (!(endnodes.find(coastlines[i].path[0].id) == endnodes.end()) && !(endnodes.find(coastlines[i].path[pathLength - 1].id) == endnodes.end())) {
-            std::cout << endnodes.find(coastlines[i].path[0].id)->second << std::endl;
-            std::cout << endnodes.find(coastlines[i].path[pathLength - 1].id)->second << std::endl;
-        } 
-        int updatedIndex = -1;
-        bool wasUpdated = false;
-        // hash only the first and the last node in a path
-        if (!(endnodes.find(coastlines[i].path[0].id) == endnodes.end())) {
-            int coastIndex = endnodes.find(coastlines[i].path[0].id)->second;
-            // last vertex -> we just append the new partial coastline (- the first vertex)
-            if (newCoastlines[coastIndex].path[newCoastlines[coastIndex].path.size() - 1].id == coastlines[i].path[0].id) {
-                // remove the trailing id so that in the sandwich case the id is not ambiguous
-                endnodes.erase(newCoastlines[coastIndex].path[newCoastlines[coastIndex].path.size() - 1].id);
-                for (int j = 1; j < pathLength; j++) {
-                    newCoastlines[coastIndex].path.push_back(coastlines[i].path[j]);
-                }
-                if (!(endnodes.find(coastlines[i].path[pathLength - 1].id) == endnodes.end())) {
-                    updatedIndex = endnodes.find(coastlines[i].path[pathLength - 1].id)->second;
-                }
-                endnodes.insert(std::make_pair(coastlines[i].path[pathLength - 1].id, coastIndex));
-                wasUpdated = true;
-            }
-        }
-        
-        // FIX: If partial coastline is sandwiched, else does not fit here
-        if (!(endnodes.find(coastlines[i].path[pathLength - 1].id) == endnodes.end())) {
-            int coastIndex = endnodes.find(coastlines[i].path[pathLength - 1].id)->second;
-
-            if (newCoastlines[coastIndex].path[0].id == coastlines[i].path[pathLength - 1].id) {
-                std::vector<Node> newPath;
-                for (int j = 0; j < pathLength; j++) {
-                    newPath.push_back(coastlines[i].path[j]);
-                }
-
-                for (int j = 1; j < newCoastlines[coastIndex].path.size(); j++) {
-                    newPath.push_back(newCoastlines[coastIndex].path[j]);
-                }
-                if (wasUpdated) {
-                    endnodes.erase(newCoastlines[updatedIndex].path[0].id);
-                    endnodes.insert(std::make_pair(newCoastlines[updatedIndex].path[0].id, coastIndex));
-                    isCLActive[updatedIndex] = false;
-                }
-                newCoastlines[coastIndex].path = newPath;
-            }
-            endnodes.insert(std::make_pair(coastlines[i].path[0].id, coastIndex));
-        } else {
-            endnodes.insert(std::make_pair(coastlines[i].path[0].id, newCoastlines.size()));
-            endnodes.insert(std::make_pair(coastlines[i].path[coastlines[i].path.size() - 1].id, newCoastlines.size()));
-            newCoastlines.push_back(coastlines[i]);
-            isCLActive.push_back(true);
-        }
-    }
-    return newCoastlines;
 }
 
 // hacky function which outputs the coastline as geojson
@@ -218,26 +152,6 @@ int findLongestCoastline(std::vector<SingleCoast> coastlines) {
     return longestCLIndex;
 }
 
-void postprocess(std::vector<SingleCoast> coastlines) {
-    int count = 0;
-    for (int i = 0; i < coastlines.size(); i++) {
-        if (coastlines[i].path[0].id != coastlines[i].path[coastlines[i].path.size() - 1].id) {
-            count++;
-            for (int j = 0; j < coastlines.size(); j++) {
-                if (j != i) {
-                    for (int k = 0; k < coastlines[j].path.size(); k++) {
-                        if (coastlines[i].path[0].id == coastlines[j].path[k].id || coastlines[i].path[coastlines[i].path.size() - 1].id == coastlines[j].path[k].id) {
-                            std::cout << "coastline could be closed" << std::endl;
-                        }
-                    }
-                }
-            }
-            
-        }
-    }
-    std::cout << count << std::endl;
-}
-
 bool performInPolyTest(std::vector<SingleCoast> coastlines, Vec2Sphere point) {
     bool isOutside = true;
     for (int i = 0; i < coastlines.size(); i++) {
@@ -258,7 +172,9 @@ int main() {
     CoastHandler handler;
     osmium::apply(reader, location_handler, handler);
     reader.close();
-    std::vector<SingleCoast> coastlines = merge_coastline2(handler.coastline);
+    CoastlineStitcher stitcher = CoastlineStitcher(handler.coastlines);
+    std::vector<SingleCoast> coastlines = stitcher.stitchCoastlines();
+    //std::vector<SingleCoast> coastlines = merge_coastlines(handler.coastlines);
     int longestCoastline = findLongestCoastline(coastlines);
     //postprocess(coastlines);
     std::vector<SingleCoast> singleLongestCoastline;

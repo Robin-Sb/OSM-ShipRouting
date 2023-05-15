@@ -18,7 +18,7 @@ endif()
 
 include_directories(${OSMIUM_INCLUDE_DIRS})
 
-set(SOURCES src/main.cpp src/PBFReader.h src/PBFReader.cpp)
+set(SOURCES src/main.cpp src/PBFReader.h src/PBFReader.cpp src/Graph.h src/Graph.cpp src/VectorMath.h src/VectorMath.cpp src/InPolyTest.h src/InPolyTest.cpp)
 add_executable(osm ${SOURCES})
 target_include_directories(osm PRIVATE ${CMAKE_SOURCE_DIR}/src)
 target_link_libraries(osm -lz -pthread)

@@ -1,11 +1,5 @@
 #include "PBFReader.h"
 
-Node::Node(float _lat, float _lng, int _id) {
-    lat = _lat;
-    lng = _lng;
-    id = _id;
-};
-
 void CoastHandler::way(const osmium::Way& way) {
         if (way.tags().has_tag("natural", "coastline")) {
             SingleCoast coast;

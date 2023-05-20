@@ -1,5 +1,9 @@
 #include <vector>
+#include <random>
+#include  "VectorMath.h"
+
 #pragma once
+
 
 class Node {
     public:
@@ -26,6 +30,10 @@ class Node {
     
 };
 
+class SingleCoast {
+    public:
+        std::vector<Node> path;
+};
 
 
 class Graph {
@@ -34,4 +42,6 @@ class Graph {
         std::vector<int> targets;
         std::vector<int> costs;
         std::vector<int> offsets;
+        std::vector<Vec2Sphere> nodes;
+        void generate(int n);
 };

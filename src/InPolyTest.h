@@ -20,7 +20,12 @@ enum Location {
 
 class InPolyTest {
     public: 
-        static Location isPointInPolygon(std::vector<Node> polygon, Vec2Sphere point);
-        static float transformLongitude(Vec2Sphere p, Vec2Sphere q);
-        static CardinalDirection isEastOrWest(float lonA, float lonB);
+        InPolyTest(std::vector<SingleCoast> _coastlines);
+        std::vector<SingleCoast> coastlines;
+        bool performPointInPolyTest(Vec2Sphere point);
+
+    private: 
+        Location isPointInPolygon(std::vector<Node> polygon, Vec2Sphere point);
+        float transformLongitude(Vec2Sphere p, Vec2Sphere q);
+        CardinalDirection isEastOrWest(float lonA, float lonB);
 };

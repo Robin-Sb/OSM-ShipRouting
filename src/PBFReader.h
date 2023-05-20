@@ -9,10 +9,6 @@
 #include "Graph.h"
 
 
-class SingleCoast {
-    public:
-        std::vector<Node> path;
-};
 
 
 class CoastHandler : public osmium::handler::Handler {

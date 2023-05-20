@@ -9,6 +9,8 @@
 #include <fstream>
 #include <unordered_map>
 #include "InPolyTest.h"
+#include <algorithm>
+#include <random>
 
 // The type of index used. This must match the include file above
 using index_type = osmium::index::map::FlexMem<osmium::unsigned_object_id_type, osmium::Location>;
@@ -16,64 +18,58 @@ using index_type = osmium::index::map::FlexMem<osmium::unsigned_object_id_type, 
 // The location handler always depends on the index type
 using location_handler_type = osmium::handler::NodeLocationsForWays<index_type>;
 
-// hacky function which outputs the coastline as geojson
-std::string buildGeoJson(std::vector<SingleCoast> coastlines) {
-    std::string out = "{ \"type\": \"FeatureCollection\"," 
-    "\"features\": [{"
-    "\"type\": \"Feature\","
-    "\"properties\":{\"fill\": \"#006600\"},"
-    "\"geometry\":{"
-    "\"type\": \"MultiPolygon\","
-    "\"coordinates\": [[";
-    for (int i = 0; i < coastlines.size(); i++) {
-        out += "[\n";
-        for (int j = 0; j < coastlines[i].path.size(); j++) {
-            bool appendId = false;
-            if (appendId)
-                out += "[\n" + std::to_string(coastlines[i].path[j].lon) + ",\n" + std::to_string(coastlines[i].path[j].lat) + ",\n" + std::to_string(coastlines[i].path[j].id) + "\n]";
-            else 
-                out += "[\n" + std::to_string(coastlines[i].path[j].lon) + ",\n" + std::to_string(coastlines[i].path[j].lat) + "\n]";
+SingleCoast findShortCoastlineWithBigPerimeter(std::vector<SingleCoast> sortedCoastlines) {
+    float maxPerimeter = 0;
+    int maxIdx = -1;
+    for (int i = sortedCoastlines.size() - 1; i > sortedCoastlines.size() - 100; i--) {
+        float perimeter = 0;
+        for (int j = 0; j < sortedCoastlines[i].path.size() - 1; j++) {
+            float latDist = sortedCoastlines[i].path[j].lat - sortedCoastlines[i].path[j + 1].lat;
+            float lonDist = sortedCoastlines[i].path[j].lon - sortedCoastlines[i].path[j + 1].lon;
+            float edgeLength = std::sqrt(latDist * latDist + lonDist * lonDist);
+            perimeter += edgeLength;
+        } 
 
-            if (j != coastlines[i].path.size() - 1) {
-                out += ",";
-            }
-            out += "\n";
+        if (perimeter>maxPerimeter) {
+            maxPerimeter = perimeter;
+            maxIdx = i;
         }
-        out += "]";
-        if (i != coastlines.size() - 1) {
-            out += ",";
-        }
-        out += "\n";
     }
-    out += "]]}}]}";
-    return out;
+    return sortedCoastlines[maxIdx];
 }
 
 
-int findLongestCoastline(std::vector<SingleCoast> coastlines) {
-    int maxLength = 0;
-    int longestCLIndex = 0;
-    for (int i = 0; i < coastlines.size(); i++) {
-        if (coastlines[i].path.size() > maxLength) {
-            maxLength = coastlines[i].path.size();
-            longestCLIndex = i;
-        }
-    }
-    return longestCLIndex;
+// actually this usually does not return the longest coastline
+SingleCoast findLongestCoastline(std::vector<SingleCoast> coastlines) {
+    // sort in descending order
+    std::sort(coastlines.begin(), coastlines.end(), [](SingleCoast &a, SingleCoast &b) {return a.path.size() > b.path.size();});
+    return findShortCoastlineWithBigPerimeter(coastlines);
 }
 
-bool performInPolyTest(std::vector<SingleCoast> coastlines, Vec2Sphere point) {
-    bool isOutside = true;
-    for (int i = 0; i < coastlines.size(); i++) {
-        Location loc = InPolyTest::isPointInPolygon(coastlines[i].path, point);
-        if (loc == Location::INSIDE)
-            isOutside = false; 
+void simpleTestSuite(std::vector<SingleCoast> coastlines) {
+    std::random_device dev;
+    std::mt19937 rng(dev());
+    std::mt19937 rng2(dev());
+    std::uniform_int_distribution<std::mt19937::result_type> distLat(0,180); // distribution in range [1, 6]
+    std::uniform_int_distribution<std::mt19937::result_type> distLon(0,360); // distribution in range [1, 6]
+    InPolyTest polyTest = InPolyTest(coastlines);
+    for (int i = 0; i < 100; i++) {
+        float latP = distLat(rng);
+        float lonP = distLon(rng2);
+        Vec2Sphere point = Vec2Sphere(latP - 90, lonP - 180);
+        bool result = polyTest.performPointInPolyTest(point);
+        std::string isOutText;
+        if (result) 
+            isOutText = " is inside";
+        else
+            isOutText = " is outside";
+        std::cout << "Point p with lat: " << point.lat << " and lon: " << point.lon << isOutText << std::endl;
     }
-    return isOutside;
 }
 
 int main() {
     auto otypes = osmium::osm_entity_bits::node | osmium::osm_entity_bits::way;
+    //osmium::io::File input_file{"../files/planet-coastlinespbf-cleanedosm.pbf"};
     osmium::io::File input_file{"../files/antarctica-latest.osm.pbf"};
     osmium::io::Reader reader{input_file, otypes};
     
@@ -85,21 +81,17 @@ int main() {
     CoastlineStitcher stitcher = CoastlineStitcher(handler.coastlines);
     std::vector<SingleCoast> coastlines = stitcher.stitchCoastlines();
     //std::vector<SingleCoast> coastlines = merge_coastlines(handler.coastlines);
-    int longestCoastline = findLongestCoastline(coastlines);
-    //postprocess(coastlines);
-    std::vector<SingleCoast> singleLongestCoastline;
-    singleLongestCoastline.push_back(coastlines[longestCoastline]);
+    // SingleCoast longestCoastline = findLongestCoastline(coastlines);
+    // std::vector<SingleCoast> singleLongestCoastline;
+    // singleLongestCoastline.push_back(longestCoastline);
+    Graph graph = Graph();
+    graph.generate(100);
+    //simpleTestSuite(coastlines);
 
-    // Vec2Sphere ref = Vec2Sphere(-90, 0);
-    // bool isOutside = performInPolyTest(coastlines, ref);
-    // if (isOutside) 
-    //     std::cout << "is outside" << std::endl;
-    // else
-    //     std::cout << "is inside" << std::endl;
-    std::string coastlines_json = buildGeoJson(coastlines);
-    std::ofstream json_stream;
-    json_stream.open ("coastlines.json");
-    json_stream << coastlines_json;
-    json_stream.close();
+    // std::string coastlines_json = buildGeoJson(singleLongestCoastline);
+    // std::ofstream json_stream;
+    // json_stream.open ("single_coastline.json");
+    // json_stream << coastlines_json;
+    // json_stream.close();
     return 0;
 }

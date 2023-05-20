@@ -1,5 +1,20 @@
 #include "InPolyTest.h"
 
+
+InPolyTest::InPolyTest(std::vector<SingleCoast> _coastlines) {
+    coastlines = _coastlines;
+}
+
+bool InPolyTest::performPointInPolyTest(Vec2Sphere point) {
+    bool isOutside = true;
+    for (int i = 0; i < coastlines.size(); i++) {
+        if (isPointInPolygon(coastlines[i].path, point) == Location::INSIDE) {
+            isOutside = false;
+        }
+    }
+    return !isOutside;
+}
+
 Location InPolyTest::isPointInPolygon(std::vector<Node> polygon, Vec2Sphere point) {
     // use north pole, since it's defo outside of every polygon, longitude is arbitrary
     Vec2Sphere ref = Vec2Sphere(90, 0);
@@ -12,7 +27,7 @@ Location InPolyTest::isPointInPolygon(std::vector<Node> polygon, Vec2Sphere poin
             diff_lon += 360;
         if (diff_lon > 180) 
             diff_lon -= 360;
-        if (diff_lon == 180 && diff_lon == -180) 
+        if (diff_lon == 180 || diff_lon == -180) 
             return Location::BOUNDARY;
     }
     int n_crossings = 0;
@@ -46,17 +61,17 @@ Location InPolyTest::isPointInPolygon(std::vector<Node> polygon, Vec2Sphere poin
             if (point.lat == pointA.lat && point.lon == pointA.lon) {
                 return Location::BOUNDARY;
             } 
-        }
-        float tLonReftoA = InPolyTest::transformLongitude(pointA, ref);
-        float tLonBtoA = InPolyTest::transformLongitude(pointA, pointB);
-        float tLonPtoA = InPolyTest::transformLongitude(pointA, point);
-        if (tLonPtoA == tLonBtoA) {
-            return Location::BOUNDARY;
-        } else {
-            CardinalDirection cd_bref = InPolyTest::isEastOrWest(tLonBtoA, tLonReftoA);
-            CardinalDirection cd_bp = InPolyTest::isEastOrWest(tLonBtoA, tLonPtoA);
-            if (cd_bref != cd_bp) 
-                n_crossings++; 
+            float tLonReftoA = InPolyTest::transformLongitude(pointA, ref);
+            float tLonBtoA = InPolyTest::transformLongitude(pointA, pointB);
+            float tLonPtoA = InPolyTest::transformLongitude(pointA, point);
+            if (tLonPtoA == tLonBtoA) {
+                return Location::BOUNDARY;
+            } else {
+                CardinalDirection cd_bref = InPolyTest::isEastOrWest(tLonBtoA, tLonReftoA);
+                CardinalDirection cd_bp = InPolyTest::isEastOrWest(tLonBtoA, tLonPtoA);
+                if (cd_bref != cd_bp) 
+                    n_crossings++; 
+            }
         }
     }
     if (n_crossings % 2 == 0) {
@@ -68,7 +83,7 @@ Location InPolyTest::isPointInPolygon(std::vector<Node> polygon, Vec2Sphere poin
 
 float InPolyTest::transformLongitude(Vec2Sphere p, Vec2Sphere q) {
     float pi = 3.14159;
-    float degToRad = pi / 180;
+    float degToRad = pi / 180.0;
     if (p.lat == 90) 
         return q.lon;
     float t = std::sin((q.lon - p.lon) * degToRad) * std::cos(q.lat * degToRad);
@@ -78,9 +93,9 @@ float InPolyTest::transformLongitude(Vec2Sphere p, Vec2Sphere q) {
 
 CardinalDirection InPolyTest::isEastOrWest(float lonA, float lonB) {
     float lon_diff = lonB - lonA;
-    if (lon_diff > 180)
+    if (lon_diff > 180) 
         lon_diff -= 360;
-    if (lon_diff < 180) 
+    if (lon_diff < -180) 
         lon_diff += 360;
     if (lon_diff > 0 && lon_diff != 180)
         return CardinalDirection::WEST;

@@ -1,15 +1,41 @@
 #include "InPolyTest.h"
 
+BoundingPolygon::BoundingPolygon(float _latMin, float _latMax, float _lonMin, float _lonMax) {
+    latMin = _latMin;
+    latMax = _latMax;
+    lonMin = _lonMin;
+    lonMax = _lonMax;
+}
+
+bool BoundingPolygon::isInside(Vec2Sphere point) {
+    if (point.lat < latMin && point.lat > latMax) 
+        return false;
+    if (point.lon < lonMin && point.lon > lonMax)
+        return false;
+    return true;
+}
 
 InPolyTest::InPolyTest(std::vector<SingleCoast> _coastlines) {
     coastlines = _coastlines;
+    for (int i = 0; i < coastlines.size(); i++) {
+        BoundingPolygon bp = BoundingPolygon(coastlines[i].path[0].lat, coastlines[i].path[0].lat, coastlines[i].path[0].lon, coastlines[i].path[0].lon);
+        for (int j = 1; j < coastlines[i].path.size(); j++) {
+            bp.latMin = std::min(coastlines[i].path[j].lat, bp.latMin);
+            bp.latMax = std::max(coastlines[i].path[j].lat, bp.latMax);
+            bp.lonMin = std::min(coastlines[i].path[j].lon, bp.lonMin);
+            bp.lonMax = std::max(coastlines[i].path[j].lon, bp.lonMax);
+        }
+        bps.push_back(bp);
+    }
 }
 
 bool InPolyTest::performPointInPolyTest(Vec2Sphere point) {
     bool isOutside = true;
     for (int i = 0; i < coastlines.size(); i++) {
-        if (isPointInPolygon(coastlines[i].path, point) == Location::INSIDE) {
-            isOutside = false;
+        if (bps[i].isInside(point)) {
+            if (isPointInPolygon(coastlines[i].path, point) == Location::INSIDE) {
+                isOutside = false;
+            }
         }
     }
     return !isOutside;

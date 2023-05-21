@@ -1,10 +1,8 @@
 #include "Graph.h"
 
-Node::Node(float _lat, float _lon, int _id) {
-    lat = _lat;
-    lon = _lon;
-    id = _id;
-};
+Graph::Graph(std::vector<SingleCoast> coastlines) {
+    polyTest = InPolyTest(coastlines);
+}
 
 void Graph::generate(int n) {
     // For random scattering, currently unused
@@ -25,7 +23,9 @@ void Graph::generate(int n) {
         float lat = phi * rad_to_deg - 90;
         float lon = theta * rad_to_deg - 180;
         Vec2Sphere node = Vec2Sphere(lat, lon);
-        _nodes.push_back(node);
+        if (!polyTest.performPointInPolyTest(node))
+            _nodes.push_back(node);
     }
     nodes = _nodes;
+
 }

@@ -32,6 +32,29 @@ std::string GeoWriter::buildPolygonGeoJson(std::vector<SingleCoast> coastlines) 
     return out;
 }
 
-std::string GeoWriter::buildNodesGeoJson(std::vector<Node> nodes) {
-    
+std::string GeoWriter::buildNodesGeoJson(std::vector<Vec2Sphere> nodes) {
+    std::string out = "{ \"type\": \"FeatureCollection\"," 
+    "\"features\": [{"
+    "\"type\": \"Feature\","
+    "\"properties\":{\"marker-color\": \"#006600\"},"
+    "\"geometry\":{"
+    "\"type\": \"MultiPoint\","
+    "\"coordinates\": [";
+    for (int i = 0; i < nodes.size(); i++) {
+        out += "[" + std::to_string(nodes[i].lon) + ",\n" + std::to_string(nodes[i].lat) + "\n]";
+
+        if (i != nodes.size() - 1)
+            out+=",";
+        out += "\n";
+    }
+    out += "]}}]}";
+    return out;
+}
+
+void GeoWriter::writeToDisk(std::string j_string, std::string file_name) {
+    std::ofstream json_stream;
+    json_stream.open (file_name);
+    json_stream << j_string;
+    json_stream.close();
+
 }

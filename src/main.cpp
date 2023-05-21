@@ -6,11 +6,11 @@
 #include <osmium/handler/node_locations_for_ways.hpp>
 #include <PBFReader.h>
 #include <string> 
-#include <fstream>
 #include <unordered_map>
 #include "InPolyTest.h"
 #include <algorithm>
 #include <random>
+#include "GeoWriter.h"
 
 // The type of index used. This must match the include file above
 using index_type = osmium::index::map::FlexMem<osmium::unsigned_object_id_type, osmium::Location>;
@@ -70,7 +70,7 @@ void simpleTestSuite(std::vector<SingleCoast> coastlines) {
 int main() {
     auto otypes = osmium::osm_entity_bits::node | osmium::osm_entity_bits::way;
     //osmium::io::File input_file{"../files/planet-coastlinespbf-cleanedosm.pbf"};
-    osmium::io::File input_file{"../files/antarctica-latest.osm.pbf"};
+    osmium::io::File input_file{"../files/planet-coastlinespbf-cleanedosm.pbf"};
     osmium::io::Reader reader{input_file, otypes};
     
     index_type index;
@@ -84,14 +84,11 @@ int main() {
     // SingleCoast longestCoastline = findLongestCoastline(coastlines);
     // std::vector<SingleCoast> singleLongestCoastline;
     // singleLongestCoastline.push_back(longestCoastline);
-    Graph graph = Graph();
-    graph.generate(100);
+    Graph graph = Graph(coastlines);
+    graph.generate(500);
+    std::string graph_json = GeoWriter::buildNodesGeoJson(graph.nodes);
+    GeoWriter::writeToDisk(graph_json, "graph.json");
     //simpleTestSuite(coastlines);
 
-    // std::string coastlines_json = buildGeoJson(singleLongestCoastline);
-    // std::ofstream json_stream;
-    // json_stream.open ("single_coastline.json");
-    // json_stream << coastlines_json;
-    // json_stream.close();
     return 0;
 }

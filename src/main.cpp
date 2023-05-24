@@ -70,7 +70,7 @@ void simpleTestSuite(std::vector<SingleCoast> coastlines) {
 int main() {
     auto otypes = osmium::osm_entity_bits::node | osmium::osm_entity_bits::way;
     //osmium::io::File input_file{"../files/planet-coastlinespbf-cleanedosm.pbf"};
-    osmium::io::File input_file{"../files/planet-coastlinespbf-cleanedosm.pbf"};
+    osmium::io::File input_file{"../files/antarctica-latest.osm.pbf"};
     osmium::io::Reader reader{input_file, otypes};
     
     index_type index;
@@ -85,9 +85,11 @@ int main() {
     // std::vector<SingleCoast> singleLongestCoastline;
     // singleLongestCoastline.push_back(longestCoastline);
     Graph graph = Graph(coastlines);
-    graph.generate(500);
-    std::string graph_json = GeoWriter::buildNodesGeoJson(graph.nodes);
-    GeoWriter::writeToDisk(graph_json, "graph.json");
+    graph.generate(1000000);
+    std::string graph_json = GeoWriter::buildGraphGeoJson(graph.nodes, graph.sources, graph.targets, graph.drawNodes);
+    //std::string nodes_json = GeoWriter::buildNodesGeoJson(graph.nodes);
+    //GeoWriter::writeToDisk(graph_json, "nodes.json");
+    GeoWriter::writeToDisk(graph_json, "../files/graph.json");
     //simpleTestSuite(coastlines);
 
     return 0;

@@ -1,7 +1,7 @@
 #pragma once
 #include <vector>
 #include <random>
-#include "VectorMath.h"
+#include "Utils.h"
 #include "GraphUtils.h"
 #include "InPolyTest.h"
 
@@ -14,5 +14,7 @@ class Graph {
         std::vector<int> costs;
         std::vector<int> offsets;
         std::vector<Vec2Sphere> nodes;
+        std::vector<Vec2Sphere> drawNodes;
         void generate(int n);
+    private:
 };

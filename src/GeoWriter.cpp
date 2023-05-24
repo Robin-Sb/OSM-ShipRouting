@@ -34,12 +34,12 @@ std::string GeoWriter::buildPolygonGeoJson(std::vector<SingleCoast> coastlines) 
 
 std::string GeoWriter::buildNodesGeoJson(std::vector<Vec2Sphere> nodes) {
     std::string out = "{ \"type\": \"FeatureCollection\"," 
-    "\"features\": [{"
-    "\"type\": \"Feature\","
-    "\"properties\":{\"marker-color\": \"#006600\"},"
-    "\"geometry\":{"
-    "\"type\": \"MultiPoint\","
-    "\"coordinates\": [";
+    "   \"features\": [{"
+    "       \"type\": \"Feature\","
+    "       \"properties\":{\"marker-color\": \"#006600\"},"
+    "   \"geometry\":{"
+    "       \"type\": \"MultiPoint\","
+    "       \"coordinates\": [";
     for (int i = 0; i < nodes.size(); i++) {
         out += "[" + std::to_string(nodes[i].lon) + ",\n" + std::to_string(nodes[i].lat) + "\n]";
 
@@ -51,10 +51,47 @@ std::string GeoWriter::buildNodesGeoJson(std::vector<Vec2Sphere> nodes) {
     return out;
 }
 
+std::string GeoWriter::buildGraphGeoJson(std::vector<Vec2Sphere> nodes, std::vector<int> sources, std::vector<int> targets, std::vector<Vec2Sphere> drawNodes) {
+    std::string out = "{\"type\": \"FeatureCollection\",\n"
+    "\"features\":[ \n";
+    for (int i = 0; i < sources.size(); i++) {
+        out += "{";
+        out += "    \"type\": \"Feature\",\n"
+        "    \"geometry\": {\n"
+        "       \"type\": \"LineString\",\n"
+        "       \"coordinates\": [\n";
+        out += "[" + std::to_string(nodes[sources[i]].lon) + "," + std::to_string(nodes[sources[i]].lat) + "],\n";
+        out += "[" + std::to_string(nodes[targets[i]].lon) + "," + std::to_string(nodes[targets[i]].lat) + "\n]";
+        out += "]}, \"properties\": {}}";
+        if (i < sources.size() - 1) {
+            out += ",";
+        }
+    }
+    bool drawPoints = false;
+    if (drawPoints) {
+        out += ",";
+        for (int i = 0; i < drawNodes.size(); i++) {
+            out += "{";
+            out += "    \"type\": \"Feature\",\n"
+            "    \"geometry\": {\n"
+            "       \"type\": \"Point\",\n"
+            "       \"coordinates\": \n";
+            out += "[" + std::to_string(drawNodes[i].lon) + "," + std::to_string(drawNodes[i].lat) + "]\n";
+            out += "}, \"properties\": {}}";
+            if (i < drawNodes.size() - 1) {
+                out += ",";
+            }
+        }
+
+    }
+
+    out += "]}";
+    return out;
+}
+
 void GeoWriter::writeToDisk(std::string j_string, std::string file_name) {
     std::ofstream json_stream;
     json_stream.open (file_name);
     json_stream << j_string;
     json_stream.close();
-
 }

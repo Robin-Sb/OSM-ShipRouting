@@ -1,6 +1,6 @@
 #pragma once
 #include <vector>
-#include "VectorMath.h"
+#include "Utils.h"
 #include "math.h"
 #include "GraphUtils.h"
 

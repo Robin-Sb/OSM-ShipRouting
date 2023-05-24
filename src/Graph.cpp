@@ -2,20 +2,14 @@
 
 Graph::Graph(std::vector<SingleCoast> coastlines) {
     polyTest = InPolyTest(coastlines);
+    
 }
 
 void Graph::generate(int n) {
-    // For random scattering, currently unused
-    // std::random_device dev;
-    // std::mt19937 rng_z(dev());
-    // std::mt19937 rng_phi(dev());
-    // std::uniform_int_distribution<std::mt19937::result_type> dist_z(0,180); 
-    // std::uniform_int_distribution<std::mt19937::result_type> dist_phi(0,360); 
     float pi = 3.141592;
     float r = 1;
-    std::vector<Vec2Sphere> _nodes;
+    //std::vector<Vec2Sphere> _nodes;
     float rad_to_deg = 180 / pi;
-
     float goldenRatio = (1 + std::pow(5, 0.5)) / 2;
     for (int i = 0; i < n; i++) {
         float theta = fmod(pi * (1 + std::pow(5, 0.5)) * i, 2 * pi);
@@ -23,9 +17,31 @@ void Graph::generate(int n) {
         float lat = phi * rad_to_deg - 90;
         float lon = theta * rad_to_deg - 180;
         Vec2Sphere node = Vec2Sphere(lat, lon);
-        if (!polyTest.performPointInPolyTest(node))
-            _nodes.push_back(node);
+        nodes.push_back(node);
+        // if (!polyTest.performPointInPolyTest(node)) {
+        //     //grid.addPoint(nodes.size() - 1, node);
+        // }
     }
-    nodes = _nodes;
-
+    std::shared_ptr<std::vector<Vec2Sphere>> _nodes = std::make_shared<std::vector<Vec2Sphere>>(nodes);
+    SphericalGrid grid = SphericalGrid(_nodes);
+    for (int i = 30000; i < 40000; i++) {
+        drawNodes.push_back(nodes[i]);
+        FoundNodes closestPoints = grid.findClosestPoints(nodes[i]);
+        if (closestPoints.leftBottom != -1) {
+            sources.push_back(i);
+            targets.push_back(closestPoints.leftBottom);
+        }
+        if (closestPoints.rightBottom != -1) {
+            sources.push_back(i);
+            targets.push_back(closestPoints.rightBottom);
+        }
+        if (closestPoints.leftTop != -1) {
+            sources.push_back(i);
+            targets.push_back(closestPoints.leftTop);
+        }
+        if (closestPoints.rightTop != -1) {
+            sources.push_back(i);
+            targets.push_back(closestPoints.rightTop);
+        }
+    }
 }

@@ -44,10 +44,10 @@ int SphericalGrid::getIndexLat(Vec2Sphere loc) {
     return std::floor((loc.lat + 90)/(180 / (n_lat - 1)));
 }
 
-FoundNodes SphericalGrid::findClosestPoints(Vec2Sphere loc) {
+FoundNodes SphericalGrid::findClosestPoints(Vec2Sphere loc, int range) {
     std::shared_ptr<std::array<std::array<std::vector<int>, 180>, 360>> _cells = std::make_shared<std::array<std::array<std::vector<int>, 180>, 360>>(cells);
     //std::shared_ptr<std::vector<Vec2Sphere>> _nodes = std::make_shared<std::vector<Vec2Sphere>>(nodes);
-    CellSearch cellSearch = CellSearch(200000, loc, _cells, nodes, getIndexLat(loc), getIndexLon(loc));
+    CellSearch cellSearch = CellSearch(range, loc, _cells, nodes, getIndexLat(loc), getIndexLon(loc));
     return cellSearch.startSearch();
 }
 

@@ -89,6 +89,19 @@ std::string GeoWriter::buildGraphGeoJson(std::vector<Vec2Sphere> nodes, std::vec
     return out;
 }
 
+std::string GeoWriter::generateFMI(std::vector<Vec2Sphere> nodes, std::vector<int> sources, std::vector<int> targets) {
+    std::string out = std::to_string(nodes.size()) + "\n";
+    out += std::to_string(sources.size()) + "\n";
+    for (int i = 0; i < nodes.size(); i++) {
+        out += std::to_string(i) + " " + std::to_string(nodes[i].lat) + " " + std::to_string(nodes[i].lon) + "\n";
+    }
+
+    for (int i = 0; i < sources.size(); i++) {
+        out += std::to_string(sources[i]) + " " + std::to_string(targets[i]) + "\n";
+    }
+    return out;
+}
+
 void GeoWriter::writeToDisk(std::string j_string, std::string file_name) {
     std::ofstream json_stream;
     json_stream.open (file_name);

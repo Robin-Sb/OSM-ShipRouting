@@ -34,7 +34,7 @@ class SphericalGrid {
         SphericalGrid(std::shared_ptr<std::vector<Vec2Sphere>> _nodes);
         void addPoint(int nodeIndex, Vec2Sphere loc);
         std::vector<int> getPointsAt(Vec2Sphere loc);
-        FoundNodes findClosestPoints(Vec2Sphere loc);
+        FoundNodes findClosestPoints(Vec2Sphere loc, int range);
     private:
         std::shared_ptr<std::vector<Vec2Sphere>> nodes;
         std::array<std::array<std::vector<int>, 180>, 360> cells;

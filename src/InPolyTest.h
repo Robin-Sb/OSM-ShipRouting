@@ -36,7 +36,7 @@ class InPolyTest {
 
     private: 
         std::vector<BoundingPolygon> bps;
-        Location isPointInPolygon(std::vector<Node> polygon, Vec2Sphere point);
+        Location isPointInPolygon(std::vector<Node> &polygon, Vec2Sphere point);
         float transformLongitude(Vec2Sphere p, Vec2Sphere q);
         CardinalDirection isEastOrWest(float lonA, float lonB);
 };

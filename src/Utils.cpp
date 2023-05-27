@@ -54,10 +54,10 @@ FoundNodes SphericalGrid::findClosestPoints(Vec2Sphere loc, int range) {
 // kind of not DRY, but this handles the "special" case to look at its own cell (otherwise the calculation is repeated 4 times)
 FoundNodes CellSearch::startSearch() {
     FoundNodes finalResult; 
-    finalResult.leftBottom = expandSearch(startIdxLat, startIdxLon, -1, -1, SearchDirection::LEFT_BOTTOM, 0).index;
-    finalResult.rightBottom = expandSearch(startIdxLat, startIdxLon, -1, 1, SearchDirection::RIGHT_BOTTOM, 0).index;
-    finalResult.leftTop = expandSearch(startIdxLat, startIdxLon, 1, -1, SearchDirection::LEFT_TOP, 0).index;
-    finalResult.rightTop = expandSearch(startIdxLat, startIdxLon, 1, 1, SearchDirection::RIGHT_TOP, 0).index;
+    finalResult.leftBottom = expandSearch(startIdxLat, startIdxLon, -1, -1, SearchDirection::LEFT_BOTTOM, 0);
+    finalResult.rightBottom = expandSearch(startIdxLat, startIdxLon, -1, 1, SearchDirection::RIGHT_BOTTOM, 0);
+    finalResult.leftTop = expandSearch(startIdxLat, startIdxLon, 1, -1, SearchDirection::LEFT_TOP, 0);
+    finalResult.rightTop = expandSearch(startIdxLat, startIdxLon, 1, 1, SearchDirection::RIGHT_TOP, 0);
     return finalResult;
 }
 
@@ -110,12 +110,10 @@ SearchResult CellSearch::expandSearch(int idxLat, int idxLon, int dirLat, int di
     int dimLat = (*cells)[0].size();
     // wraparound at the end of the grid
     int newIdxLon = (idxLon + dirLon + dimLon) % dimLon; 
-    //int newIdxLat = (idxLat + dirLat + dimLat) % dimLat;
     // fix negative sign lat/long
     float distToBorderDiagonal = Vec2Sphere::dist(loc, getBoundaryCoords(idxLat, idxLon, dirLat, dirLon));
-    SearchResult stdBest = SearchResult(-1, range + 1);
     // standard case -> without expansion
-    if (distToBorderDiagonal < range) {
+    if (distToBorderDiagonal < bestResult.dist) {
         SearchResult diagBest = expandSearch(idxLat + dirLat, newIdxLon, dirLat, dirLon, searchDir, iterCount + 1);
         if (diagBest.dist < bestResult.dist)
             bestResult = diagBest;
@@ -125,7 +123,7 @@ SearchResult CellSearch::expandSearch(int idxLat, int idxLon, int dirLat, int di
     SearchResult sideBest = SearchResult(-1, range + 1);
     if (dirLon != 0 && dirLat != 0) {
         float distToBorderLonDir = Vec2Sphere::dist(loc, getBoundaryCoords(idxLat, idxLon, 0, dirLon));
-        if (distToBorderLonDir < range) {
+        if (distToBorderLonDir < bestResult.dist) {
             SearchResult expLon = expandSearch(idxLat, newIdxLon, 0, dirLon, searchDir, 0);
             if (expLon.dist < bestResult.dist)
                 bestResult = expLon;
@@ -133,7 +131,7 @@ SearchResult CellSearch::expandSearch(int idxLat, int idxLon, int dirLat, int di
         
         SearchResult expLat = SearchResult(-1, range + 1);
         float distToBorderLatDir = Vec2Sphere::dist(loc, getBoundaryCoords(idxLat, idxLon, dirLat, 0));
-        if (distToBorderLatDir < range) {
+        if (distToBorderLatDir < bestResult.dist) {
             SearchResult expLat = expandSearch(idxLat + dirLat, idxLon, dirLat, 0, searchDir, 0);
             if (expLat.dist < bestResult.dist)
                 bestResult = expLat;
@@ -162,7 +160,7 @@ Vec2Sphere CellSearch::getBoundaryCoords(int idxLat, int idxLon, int dirLat, int
 
 bool CellSearch::checkLeft(Vec2Sphere ref, Vec2Sphere comp) {
     // special case at the border
-    if (ref.lon > 0 && comp.lon < 0)
+    if (ref.lon < 0 && comp.lon > 0)
         return true;
     else if (comp.lon < ref.lon)
         return true;
@@ -170,7 +168,7 @@ bool CellSearch::checkLeft(Vec2Sphere ref, Vec2Sphere comp) {
 }
 
 bool CellSearch::checkRight(Vec2Sphere ref, Vec2Sphere comp) {
-    if (ref.lon < 0 && comp.lon > 0)
+    if (ref.lon > 0 && comp.lon < 0)
         return true;
     else if (comp.lon > ref.lon)
         return true;

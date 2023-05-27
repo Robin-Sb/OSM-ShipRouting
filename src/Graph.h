@@ -5,6 +5,8 @@
 #include "GraphUtils.h"
 #include "InPolyTest.h"
 #include <fstream>
+#include <thread>
+#include <future>
 
 class Graph {
     public:
@@ -18,5 +20,7 @@ class Graph {
         void buildFromFMI(std::string fmiFile);
         void readNodes(std::ifstream &file, int n);
         void readEdges(std::ifstream &file, int m);
+        void performPolyTestsConcurrent(std::vector<Vec2Sphere> &allNodes, InPolyTest &polyTest);
+        static void addNodeConcurrent(std::vector<Vec2Sphere> &allNodes, int rangeStart, int rangeEnd, InPolyTest &polyTest, std::shared_ptr<std::vector<Vec2Sphere>> outNodes);
     private:
 };

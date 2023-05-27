@@ -1,6 +1,6 @@
 #include "GeoWriter.h"
 
-std::string GeoWriter::buildPolygonGeoJson(std::vector<SingleCoast> coastlines) {
+std::string GeoWriter::buildPolygonGeoJson(std::vector<SingleCoast> &coastlines) {
     std::string out = "{ \"type\": \"FeatureCollection\"," 
     "\"features\": [{"
     "\"type\": \"Feature\","
@@ -32,7 +32,7 @@ std::string GeoWriter::buildPolygonGeoJson(std::vector<SingleCoast> coastlines) 
     return out;
 }
 
-std::string GeoWriter::buildNodesGeoJson(std::vector<Vec2Sphere> nodes) {
+std::string GeoWriter::buildNodesGeoJson(std::vector<Vec2Sphere> &nodes) {
     std::string out = "{ \"type\": \"FeatureCollection\"," 
     "   \"features\": [{"
     "       \"type\": \"Feature\","
@@ -51,7 +51,7 @@ std::string GeoWriter::buildNodesGeoJson(std::vector<Vec2Sphere> nodes) {
     return out;
 }
 
-std::string GeoWriter::buildGraphGeoJson(std::vector<Vec2Sphere> nodes, std::vector<int> sources, std::vector<int> targets, std::vector<Vec2Sphere> drawNodes) {
+std::string GeoWriter::buildGraphGeoJson(std::vector<Vec2Sphere> &nodes, std::vector<int> &sources, std::vector<int> &targets, std::vector<Vec2Sphere> &drawNodes) {
     std::string out = "{\"type\": \"FeatureCollection\",\n"
     "\"features\":[ \n";
     for (int i = 0; i < sources.size(); i++) {
@@ -60,8 +60,14 @@ std::string GeoWriter::buildGraphGeoJson(std::vector<Vec2Sphere> nodes, std::vec
         "    \"geometry\": {\n"
         "       \"type\": \"LineString\",\n"
         "       \"coordinates\": [\n";
-        out += "[" + std::to_string(nodes[sources[i]].lon) + "," + std::to_string(nodes[sources[i]].lat) + "],\n";
-        out += "[" + std::to_string(nodes[targets[i]].lon) + "," + std::to_string(nodes[targets[i]].lat) + "\n]";
+        float tLonSrc = nodes[sources[i]].lon;
+        float tLonTrg = nodes[targets[i]].lon;
+        if (nodes[sources[i]].lon < -175 && nodes[targets[i]].lon > 175) 
+            tLonSrc = 180 + (180 + nodes[sources[i]].lon);
+        if (nodes[sources[i]].lon > 175 && nodes[targets[i]].lon < -175)
+            tLonTrg = 180 + (180 + nodes[targets[i]].lon);
+        out += "[" + std::to_string(tLonSrc) + "," + std::to_string(nodes[sources[i]].lat) + "],\n";
+        out += "[" + std::to_string(tLonTrg) + "," + std::to_string(nodes[targets[i]].lat) + "]\n";
         out += "]}, \"properties\": {}}";
         if (i < sources.size() - 1) {
             out += ",";
@@ -89,7 +95,7 @@ std::string GeoWriter::buildGraphGeoJson(std::vector<Vec2Sphere> nodes, std::vec
     return out;
 }
 
-std::string GeoWriter::generateFMI(std::vector<Vec2Sphere> nodes, std::vector<int> sources, std::vector<int> targets) {
+std::string GeoWriter::generateFMI(std::vector<Vec2Sphere> &nodes, std::vector<int> &sources, std::vector<int> &targets, std::vector<int> &costs) {
     std::string out = std::to_string(nodes.size()) + "\n";
     out += std::to_string(sources.size()) + "\n";
     for (int i = 0; i < nodes.size(); i++) {
@@ -97,7 +103,7 @@ std::string GeoWriter::generateFMI(std::vector<Vec2Sphere> nodes, std::vector<in
     }
 
     for (int i = 0; i < sources.size(); i++) {
-        out += std::to_string(sources[i]) + " " + std::to_string(targets[i]) + "\n";
+        out += std::to_string(sources[i]) + " " + std::to_string(targets[i]) + " " + std::to_string(costs[i]) + "\n";
     }
     return out;
 }

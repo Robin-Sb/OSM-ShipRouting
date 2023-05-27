@@ -8,9 +8,16 @@ BoundingPolygon::BoundingPolygon(float _latMin, float _latMax, float _lonMin, fl
 }
 
 bool BoundingPolygon::isInside(Vec2Sphere point) {
-    if (point.lat < latMin && point.lat > latMax) 
+    float newLon = point.lon;
+    // handle special antimeridian case with new transformed coordinates
+    if (lonMax > 180) {
+        if (point.lon < 0) {
+            newLon = 180 + (180 + point.lon);
+        }
+    }
+    if (point.lat < latMin || point.lat > latMax) 
         return false;
-    if (point.lon < lonMin && point.lon > lonMax)
+    if (newLon < lonMin || newLon > lonMax)
         return false;
     return true;
 }
@@ -19,11 +26,41 @@ InPolyTest::InPolyTest(std::vector<SingleCoast> _coastlines) {
     coastlines = _coastlines;
     for (int i = 0; i < coastlines.size(); i++) {
         BoundingPolygon bp = BoundingPolygon(coastlines[i].path[0].lat, coastlines[i].path[0].lat, coastlines[i].path[0].lon, coastlines[i].path[0].lon);
+        
+        bool crossesAntiMeridian = false;
         for (int j = 1; j < coastlines[i].path.size(); j++) {
-            bp.latMin = std::min(coastlines[i].path[j].lat, bp.latMin);
             bp.latMax = std::max(coastlines[i].path[j].lat, bp.latMax);
+            bp.latMin = std::min(coastlines[i].path[j].lat, bp.latMin);
             bp.lonMin = std::min(coastlines[i].path[j].lon, bp.lonMin);
             bp.lonMax = std::max(coastlines[i].path[j].lon, bp.lonMax);
+            Node start = coastlines[i].path[j];
+            Node end;
+            if (j < coastlines[i].path.size() - 1)
+                end = coastlines[i].path[j + 1];
+            else
+                end = coastlines[i].path[0];
+            // very hacky test whether a line crosses the antimeridian
+            if ((start.lon > 170 && end.lon < -170) || (start.lon < -170 && end.lon > 170))
+                crossesAntiMeridian = true;
+        }
+        //std::cout << bp.latMin << std::endl;
+        // if polygon crosses antimeridian
+        // kind of hacky but in this case we transform the negative longitude to positive (range [0, 360])
+        if (crossesAntiMeridian) {
+            float oldMin = bp.lonMin;
+            bp.lonMin = bp.lonMax;
+            bp.lonMax = 180 + (180 + oldMin);
+        }
+
+        //std::cout << bp.latMin << std::endl;
+
+        // check if south pole in polygon -> special case
+        Vec2Sphere southpole = Vec2Sphere(-85.0, 45);
+        Location polyTestResult = isPointInPolygon(coastlines[i].path, southpole);
+        if (polyTestResult == Location::INSIDE) {
+            bp.latMin = -90;
+            bp.lonMax = 180;
+            bp.lonMin = -180;
         }
         bps.push_back(bp);
     }
@@ -33,15 +70,17 @@ bool InPolyTest::performPointInPolyTest(Vec2Sphere point) {
     bool isOutside = true;
     for (int i = 0; i < coastlines.size(); i++) {
         if (bps[i].isInside(point)) {
-            if (isPointInPolygon(coastlines[i].path, point) == Location::INSIDE) {
+            Location polyTestResult = isPointInPolygon(coastlines[i].path, point);
+            if (polyTestResult == Location::INSIDE || polyTestResult == Location::BOUNDARY) {
                 isOutside = false;
+                break;
             }
         }
     }
     return !isOutside;
 }
 
-Location InPolyTest::isPointInPolygon(std::vector<Node> polygon, Vec2Sphere point) {
+Location InPolyTest::isPointInPolygon(std::vector<Node> &polygon, Vec2Sphere point) {
     // use north pole, since it's defo outside of every polygon, longitude is arbitrary
     Vec2Sphere ref = Vec2Sphere(90, 0);
     if (polygon.size() == 0)

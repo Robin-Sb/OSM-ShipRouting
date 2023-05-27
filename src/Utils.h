@@ -15,6 +15,16 @@ class Vec2Sphere {
         static float dist(Vec2Sphere ref, Vec2Sphere comp);
 };
 
+struct SearchResult {
+    SearchResult() {}    
+    SearchResult(int _index, float _dist) {
+        index = _index;
+        dist = _dist;
+    }
+    int index;
+    float dist;
+};
+
 struct FoundNodes {
     // FoundNodes(int _leftBottom, int _rightBottom, int _leftTop, int _rightTop) {
     //     leftBottom = _leftBottom;
@@ -22,10 +32,10 @@ struct FoundNodes {
     //     leftTop = _leftTop;
     //     rightTop = _rightTop;
     // }
-    int leftBottom;
-    int rightBottom;
-    int leftTop;
-    int rightTop;
+    SearchResult leftBottom;
+    SearchResult rightBottom;
+    SearchResult leftTop;
+    SearchResult rightTop;
 };
 
 class SphericalGrid {
@@ -47,16 +57,6 @@ enum SearchDirection {
     LEFT_TOP,
     RIGHT_TOP,
     RIGHT_BOTTOM
-};
-
-struct SearchResult {
-    SearchResult() {}    
-    SearchResult(int _index, float _dist) {
-        index = _index;
-        dist = _dist;
-    }
-    int index;
-    float dist;
 };
 
 class CellSearch {

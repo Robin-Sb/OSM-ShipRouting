@@ -80,20 +80,18 @@ int main() {
     reader.close();
     CoastlineStitcher stitcher = CoastlineStitcher(handler.coastlines);
     std::vector<SingleCoast> coastlines = stitcher.stitchCoastlines();
-    //std::vector<SingleCoast> coastlines = merge_coastlines(handler.coastlines);
-    // SingleCoast longestCoastline = findLongestCoastline(coastlines);
-    // std::vector<SingleCoast> singleLongestCoastline;
-    // singleLongestCoastline.push_back(longestCoastline);
+    InPolyTest polyTest = InPolyTest(coastlines);
+    Vec2Sphere southpole = Vec2Sphere(44.1015, 75.4402);
+    polyTest.performPointInPolyTest(southpole);
     Graph graph = Graph();
-    //graph.generate(2000000, coastlines);
-    graph.buildFromFMI("../files/graph.fmi");
+    graph.generate(1000, coastlines);
+    //graph.buildFromFMI("../files/graph.fmi");
     std::string graph_json = GeoWriter::buildGraphGeoJson(graph.nodes, graph.sources, graph.targets, graph.drawNodes);
-    //std::string graph_fmi = GeoWriter::generateFMI(graph.nodes, graph.sources, graph.targets);
-    //std::string nodes_json = GeoWriter::buildNodesGeoJson(graph.nodes);
-    //GeoWriter::writeToDisk(graph_json, "nodes.json");
+    std::string graph_fmi = GeoWriter::generateFMI(graph.nodes, graph.sources, graph.targets, graph.costs);
+    std::string nodes_json = GeoWriter::buildNodesGeoJson(graph.nodes);
     GeoWriter::writeToDisk(graph_json, "../files/graph.json");
-    //GeoWriter::writeToDisk(graph_fmi, "../files/graph.fmi");
-    //simpleTestSuite(coastlines);
+    GeoWriter::writeToDisk(graph_fmi, "../files/graph.fmi");
+    GeoWriter::writeToDisk(nodes_json, "../files/nodes_all.json");
 
     return 0;
 }

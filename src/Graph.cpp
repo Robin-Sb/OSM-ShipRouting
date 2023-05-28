@@ -11,57 +11,77 @@ void Graph::buildFromFMI(std::string fmiFile) {
         std::getline(file, n_edges);
         readNodes(file, std::stoi(n_nodes.c_str()));
         readEdges(file, std::stoi(n_edges.c_str()));
+        for (int i = 1; i < offsets.size(); i++) 
+            offsets[i] += offsets[i - 1];
+        std::shared_ptr<std::vector<Vec2Sphere>> nodes_ptr = std::make_shared<std::vector<Vec2Sphere>>(nodes);
+        sGrid = std::make_unique<SphericalGrid>(nodes_ptr);
     }
 }
 
-template <typename T, typename Compare>
-std::vector<std::size_t> sort_permutation(
-    const std::vector<T>& vec,
-    Compare compare)
-{
-    std::vector<std::size_t> p(vec.size());
-    std::iota(p.begin(), p.end(), 0);
-    std::sort(p.begin(), p.end(),
-        [&](std::size_t i, std::size_t j){ return compare(vec[i], vec[j]); });
-    return p;
+std::vector<Vec2Sphere> Graph::performDijkstra(Vec2Sphere startPos, Vec2Sphere endPos) {
+    // start the search with the node closest to the selected position
+    int startIndex = sGrid->findClosestPoint(startPos);
+    int endIndex = sGrid->findClosestPoint(endPos);
+    std::vector<Vec2Sphere> nodePath;
+    if (startIndex == -1) {
+        std::cout << "No adjacent node found. Are you starting from land?" << std::endl;
+        return nodePath;
+    }
+    if (endIndex == -1) {
+        std::cout << "End node not found. Are you trying to travel to land?" << std::endl;
+        return nodePath;
+    }
+    std::vector<int> path = dijkstra(startIndex, endIndex);
+    for (int i= 0; i < path.size(); i++) {
+        nodePath.push_back(nodes[path[i]]);
+    }
+    return nodePath;
 }
 
-template <typename T>
-std::vector<T> apply_permutation(
-    const std::vector<T>& vec,
-    const std::vector<std::size_t>& p)
-{
-    std::vector<T> sorted_vec(vec.size());
-    std::transform(p.begin(), p.end(), sorted_vec.begin(),
-        [&](std::size_t i){ return vec[i]; });
-    return sorted_vec;
-}
+std::vector<int> Graph::dijkstra(int source, int target) {
+    std::vector<int> dist;
+    std::vector<int> prev;
+    std::priority_queue<std::pair<int, int>, std::vector<std::pair<int, int>>, std::greater<std::pair<int, int>>> pq;
+    for (int i = 0; i < nodes.size(); i++) {
+        int max_int = 2147483647;
+        dist.push_back(max_int);
+        prev.push_back(-1);
+    }
+    dist[source] = 0;
+    pq.push(std::make_pair(0, source));
+    std::set<int> explored;
 
-template <typename T>
-void apply_permutation_in_place(
-    std::vector<T>& vec,
-    const std::vector<std::size_t>& p)
-{
-    std::vector<bool> done(vec.size());
-    for (std::size_t i = 0; i < vec.size(); ++i)
-    {
-        if (done[i])
-        {
-            continue;
-        }
-        done[i] = true;
-        std::size_t prev_j = i;
-        std::size_t j = p[i];
-        while (i != j)
-        {
-            std::swap(vec[prev_j], vec[j]);
-            done[j] = true;
-            prev_j = j;
-            j = p[j];
+    while (!pq.empty()) {
+        std::pair<int, int> node = pq.top();
+        pq.pop();
+        int u = node.second;
+        if (u == target) 
+            break;
+        explored.insert(u);
+        for (int i = offsets[u]; i < offsets[u + 1]; i++) {
+            int v = targets[i];
+            if (explored.count(v))
+                continue;
+
+            int altDist = dist[u] + costs[v];
+            if (altDist < dist[v]) {
+                dist[v] = altDist;
+                prev[v] = u;
+                pq.push(std::make_pair(dist[v], v));
+            }
         }
     }
-}
 
+    std::vector<int> path;
+    int currentNode = target;
+    while (currentNode != source) {
+        path.push_back(currentNode);
+        currentNode = prev[currentNode];
+    }
+
+    std::reverse(path.begin(), path.end());
+    return path;
+}
 
 void Graph::readEdges(std::ifstream &file, int m) {
     for (int i = 0; i < m; i++) {
@@ -77,10 +97,12 @@ void Graph::readEdges(std::ifstream &file, int m) {
         sources.push_back(source);
         targets.push_back(target);
         costs.push_back(dist);
+        offsets[source + 1] += 1;
     }
 }
 
 void Graph::readNodes(std::ifstream &file, int n) {
+    offsets.push_back(0);
     for (int i = 0; i < n; i++) {
         std::string node_text;
         std::getline(file, node_text);
@@ -95,6 +117,8 @@ void Graph::readNodes(std::ifstream &file, int n) {
         float lon = std::stof(s_lon);
         Vec2Sphere node = Vec2Sphere(lat, lon);
         nodes.push_back(node);
+        // prefill offset array
+        offsets.push_back(0);
     }
 }
 

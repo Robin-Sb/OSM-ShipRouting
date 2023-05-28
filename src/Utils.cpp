@@ -51,7 +51,20 @@ FoundNodes SphericalGrid::findClosestPoints(Vec2Sphere loc, int range) {
     return cellSearch.startSearch();
 }
 
-// kind of not DRY, but this handles the "special" case to look at its own cell (otherwise the calculation is repeated 4 times)
+// this can be optimized by looking in all direction initially instead of agglomerating the individual directions
+int SphericalGrid::findClosestPoint(Vec2Sphere loc) {
+    FoundNodes closestPoints = findClosestPoints(loc, 100000);
+    SearchResult closestPoint = closestPoints.leftBottom;
+    
+    if (closestPoints.leftTop.dist < closestPoint.dist)  
+        closestPoint = closestPoints.leftTop;
+    if (closestPoints.rightBottom.dist < closestPoint.dist)
+        closestPoint = closestPoints.rightBottom;
+    if (closestPoints.rightTop.dist < closestPoint.dist)
+        closestPoint = closestPoints.rightTop;
+    return closestPoint.index;
+}
+
 FoundNodes CellSearch::startSearch() {
     FoundNodes finalResult; 
     finalResult.leftBottom = expandSearch(startIdxLat, startIdxLon, -1, -1, SearchDirection::LEFT_BOTTOM, 0);

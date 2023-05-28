@@ -32,18 +32,22 @@ void generate_graph(Graph &graph, int amount) {
     CoastlineStitcher stitcher = CoastlineStitcher(handler.coastlines);
     std::vector<SingleCoast> coastlines = stitcher.stitchCoastlines();
     graph.generate(amount, coastlines);
+    std::string graph_fmi = GeoWriter::generateFMI(graph.nodes, graph.sources, graph.targets, graph.costs);
+    GeoWriter::writeToDisk(graph_fmi, "../files/graph_big.fmi");
 }
 
 
 int main() {
     Graph graph = Graph();
     graph.buildFromFMI("../graph.fmi");
-    graph.performDijkstra(Vec2Sphere(23.7259, -47.3978), Vec2Sphere(20.3564, -29.5896));
+    std::vector<Vec2Sphere> resultPath = graph.performDijkstra(Vec2Sphere(23.7259, -47.3978), Vec2Sphere(20.3564, -29.5896));
     // std::string graph_json = GeoWriter::buildGraphGeoJson(graph.nodes, graph.sources, graph.targets, graph.drawNodes);
     // std::string graph_fmi = GeoWriter::generateFMI(graph.nodes, graph.sources, graph.targets, graph.costs);
     // std::string nodes_json = GeoWriter::buildNodesGeoJson(graph.nodes);
     // GeoWriter::writeToDisk(graph_json, "../files/graph.json");
     // GeoWriter::writeToDisk(graph_fmi, "../files/graph.fmi");
     // GeoWriter::writeToDisk(nodes_json, "../files/nodes_all.json");
+    std::string path_json = GeoWriter::buildPathGeoJson(resultPath);
+    GeoWriter::writeToDisk(path_json, "../files/result_path.json");
     return 0;
 }

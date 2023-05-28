@@ -6,7 +6,9 @@
 #include "InPolyTest.h"
 #include <fstream>
 #include <thread>
-#include <future>
+#include <future> 
+#include <algorithm>
+#include <numeric>
 
 class Graph {
     public:
@@ -20,7 +22,9 @@ class Graph {
         void buildFromFMI(std::string fmiFile);
         void readNodes(std::ifstream &file, int n);
         void readEdges(std::ifstream &file, int m);
-        void performPolyTestsConcurrent(std::vector<Vec2Sphere> &allNodes, InPolyTest &polyTest);
+        void performPolyTestsConcurrent(std::vector<Vec2Sphere> &allNodes, InPolyTest &polyTest, int n_threads);
         static void addNodeConcurrent(std::vector<Vec2Sphere> &allNodes, int rangeStart, int rangeEnd, InPolyTest &polyTest, std::shared_ptr<std::vector<Vec2Sphere>> outNodes);
+        static void findEdgeConcurrent(std::vector<Vec2Sphere> &allNodes, int startIndex, int endIndex, SphericalGrid &grid,  std::shared_ptr<std::vector<int>> _sources, std::shared_ptr<std::vector<int>> _targets, std::shared_ptr<std::vector<int>> _costs);
+        void performEdgeSearchConcurrent(int n_threads);
     private:
 };

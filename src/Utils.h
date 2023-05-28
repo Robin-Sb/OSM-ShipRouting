@@ -5,6 +5,7 @@
 #include <memory>
 #include <iostream>
 
+
 class Vec2Sphere {
     public:
         Vec2Sphere() {};

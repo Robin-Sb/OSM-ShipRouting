@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>OSM Routing</title>
+        <link rel="stylesheet" href="./libs/leaflet.css"/>
+        <link rel="stylesheet" href="style.css"/>
+        <script>var exports = {};</script>
+        <script type="module" src="./libs/leaflet.js"></script>
+        <script type="module" src="main.js"></script>
+    </head>
+
+    <body>
+        <div id="map"></div>
+        <div>
+            <div class="div-block">
+                <button id="set_start">Set Start</button>
+                <div class="div-inline" id="start_display">Latitude: None, Longitude: None</div>
+            </div>
+            <div class="div-block">
+                <button id="set_end">Set End</button>
+                <div class="div-inline" id="end_display">Latitude: None, Longitude: None</div>
+            </div>
+            <div class="div-block">
+                <button id="route">Route</button>    
+                <div class="div-inline" id="dist_display">Distance: None</div>
+            </div>
+        </div>
+        <!-- <form id="locations">
+            <label for="lat1">Latitude Start</label>
+            <input id="lat1" type="text" name="lat1" />
+            <label for="lon1">Longitude Start</label>
+            <input id="lon1" type="text" name="lon1" />
+            <label for="lat2">Latitude End</label>
+            <input id="lat2" type="text" name="lat2" />
+            <label for="lon2">Longitude End</label>
+            <input id="lon2" type="text" name="lon2" />
+            
+            <input type="submit" value="Route" />
+        </form> -->
+    </body>
+</html>

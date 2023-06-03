@@ -51,20 +51,21 @@ std::string GeoWriter::buildNodesGeoJson(std::vector<Vec2Sphere> &nodes) {
     return out;
 }
 
-std::string GeoWriter::buildPathGeoJson(std::vector<Vec2Sphere> &path) {
-    std::string out = "{\"type\": \"FeatureCollection\",\n"
-    "\"features\": [{\n"
-    "\"type:\": \"Feature\",\n"
-    "\"properties\": {},\n"
-    "\"geometry\": {\n"
-    "\"type\": \"LineString\",\n"
-    "\"coordinates\": [\n";
+std::string GeoWriter::buildPathGeoJson(ResultDTO &result) {
+    std::vector<Vec2Sphere> &path = result.path;
+    std::string out = "{"
+    "   \"type\": \"Feature\",\n"
+    "   \"properties\": {},\n"
+    "   \"geometry\": {\n"
+    "       \"type\": \"LineString\",\n"
+    "       \"coordinates\": [\n";
     for (int i = 0; i < path.size(); i++) {
-        out += "[" + std::to_string(path[i].lon) + ",\n" + std::to_string(path[i].lat) + "]";
+        out += "            [" + std::to_string(path[i].lon) + ", " + std::to_string(path[i].lat) + "]";
         if (i != path.size() - 1) 
-            out += ",";
+            out += ",\n";
     }
-    out += "]}}]}";
+    out += "\n]\n}, \"distance\":" + std::to_string(result.distance); 
+    out += "\n}";
     return out;
 }
 

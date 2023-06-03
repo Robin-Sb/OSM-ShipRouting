@@ -10,6 +10,12 @@
 #include <set>
 #include <algorithm>
 
+struct ResultDTO {
+    ResultDTO(std::vector<Vec2Sphere> &_path, int _distance): path(_path), distance(_distance) {};
+    std::vector<Vec2Sphere> path;
+    int distance;
+};
+
 
 class Graph {
     public:
@@ -18,7 +24,7 @@ class Graph {
         std::vector<int> costs;
         std::vector<int> offsets;
         std::vector<Vec2Sphere> nodes;
-        std::vector<Vec2Sphere> performDijkstra(Vec2Sphere startPos, Vec2Sphere endPos);
+        ResultDTO performDijkstra(Vec2Sphere startPos, Vec2Sphere endPos);
         void generate(int n, std::vector<SingleCoast> coastlines);
         void buildFromFMI(std::string fmiFile);
         void readNodes(std::ifstream &file, int n);
@@ -29,5 +35,5 @@ class Graph {
         void performEdgeSearchConcurrent(int n_threads);
     private:
         std::unique_ptr<SphericalGrid> sGrid;
-        std::vector<int> dijkstra(int startIndex, int endIndex);
+        ResultDTO dijkstra(int startIndex, int endIndex);
 };

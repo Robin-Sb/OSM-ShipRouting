@@ -18,27 +18,23 @@ void Graph::buildFromFMI(std::string fmiFile) {
     }
 }
 
-std::vector<Vec2Sphere> Graph::performDijkstra(Vec2Sphere startPos, Vec2Sphere endPos) {
+ResultDTO Graph::performDijkstra(Vec2Sphere startPos, Vec2Sphere endPos) {
     // start the search with the node closest to the selected position
     int startIndex = sGrid->findClosestPoint(startPos);
     int endIndex = sGrid->findClosestPoint(endPos);
     std::vector<Vec2Sphere> nodePath;
     if (startIndex == -1) {
         std::cout << "No adjacent node found. Are you starting from land?" << std::endl;
-        return nodePath;
+        return ResultDTO(nodePath, -1);
     }
     if (endIndex == -1) {
         std::cout << "End node not found. Are you trying to travel to land?" << std::endl;
-        return nodePath;
+        return ResultDTO(nodePath, -1);
     }
-    std::vector<int> path = dijkstra(startIndex, endIndex);
-    for (int i= 0; i < path.size(); i++) {
-        nodePath.push_back(nodes[path[i]]);
-    }
-    return nodePath;
+    return dijkstra(startIndex, endIndex);
 }
 
-std::vector<int> Graph::dijkstra(int source, int target) {
+ResultDTO Graph::dijkstra(int source, int target) {
     std::vector<int> dist;
     std::vector<int> prev;
     std::priority_queue<std::pair<int, int>, std::vector<std::pair<int, int>>, std::greater<std::pair<int, int>>> pq;
@@ -80,7 +76,12 @@ std::vector<int> Graph::dijkstra(int source, int target) {
     }
 
     std::reverse(path.begin(), path.end());
-    return path;
+    std::vector<Vec2Sphere> nodePath;
+    for (int i= 0; i < path.size(); i++) {
+        nodePath.push_back(nodes[path[i]]);
+    }
+
+    return ResultDTO(nodePath, dist[target]);
 }
 
 void Graph::readEdges(std::ifstream &file, int m) {
@@ -132,19 +133,34 @@ void Graph::addNodeConcurrent(std::vector<Vec2Sphere> &allNodes, int rangeStart,
 
 
 void Graph::generate(int n, std::vector<SingleCoast> coastlines) {
+
     InPolyTest polyTest = InPolyTest(coastlines);
-    float pi = 3.141592;
-    float r = 1;
+    const float pi = 3.141592;
+    const float r = 6371;
+    std::random_device rand_dev_z;
+    std::mt19937 generator_z(rand_dev_z());
+    std::uniform_int_distribution<int> distr_z(-r, r);
+    std::random_device rand_dev_phi;
+    std::mt19937 generator_phi(rand_dev_phi());
+    std::uniform_int_distribution<int> distr_phi(0, 2 * pi);
+
     //std::vector<Vec2Sphere> _nodes;
-    float rad_to_deg = 180 / pi;
-    float goldenRatio = (1 + std::pow(5, 0.5)) / 2;
+    // float rad_to_deg = 180 / pi;
+    // float goldenRatio = (1 + std::pow(5, 0.5)) / 2;
     auto start = std::chrono::system_clock::now();
     std::vector<Vec2Sphere> allNodes;
     for (int i = 0; i < n; i++) {
-        float theta = fmod(pi * (1 + std::pow(5, 0.5)) * i, 2 * pi);
-        float phi = std::acos(1 - 2 * (i+0.5)/n);
-        float lat = phi * rad_to_deg - 90;
-        float lon = theta * rad_to_deg - 180;
+        float z = distr_z(generator_z);
+        float phi = distr_phi(generator_phi);
+        float x = std::sqrt(r * r - z * z) * std::cos(phi);
+        float y = std::sqrt(r * r - z * z) * std::sin(phi);
+        float lat = std::asin(z / r);
+        float lon = std::atan2(y, x);
+
+        // float theta = fmod(pi * (1 + std::pow(5, 0.5)) * i, 2 * pi);
+        // float phi = std::acos(1 - 2 * (i+0.5)/n);
+        // float lat = phi * rad_to_deg - 90;
+        // float lon = theta * rad_to_deg - 180;
         Vec2Sphere node = Vec2Sphere(lat, lon);
         allNodes.push_back(node);
     }

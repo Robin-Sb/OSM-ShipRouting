@@ -1,0 +1,16 @@
+#map { height: 700px; }
+
+
+button {
+    display: inline;
+padding: 5px;
+margin: 2px;
+width: 100px;}
+
+.div-block {
+    display: block;
+}
+
+.div-inline {
+    display: inline;
+}

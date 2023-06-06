@@ -51,28 +51,30 @@ std::string GeoWriter::buildNodesGeoJson(std::vector<Vec2Sphere> &nodes) {
     return out;
 }
 
-std::string GeoWriter::buildPathGeoJson(std::vector<Vec2Sphere> &path) {
-    std::string out = "{\"type\": \"FeatureCollection\",\n"
-    "\"features\": [{\n"
-    "\"type:\": \"Feature\",\n"
-    "\"properties\": {},\n"
-    "\"geometry\": {\n"
-    "\"type\": \"LineString\",\n"
-    "\"coordinates\": [\n";
+std::string GeoWriter::buildPathGeoJson(ResultDTO &result) {
+    std::vector<Vec2Sphere> &path = result.path;
+    std::string out = "{"
+    "   \"type\": \"Feature\",\n"
+    "   \"properties\": {},\n"
+    "   \"geometry\": {\n"
+    "       \"type\": \"LineString\",\n"
+    "       \"coordinates\": [\n";
     for (int i = 0; i < path.size(); i++) {
-        out += "[" + std::to_string(path[i].lon) + ",\n" + std::to_string(path[i].lat) + "]";
+        out += "            [" + std::to_string(path[i].lon) + ", " + std::to_string(path[i].lat) + "]";
         if (i != path.size() - 1) 
-            out += ",";
+            out += ",\n";
     }
-    out += "]}}]}";
+    out += "\n]\n}, \"distance\":" + std::to_string(result.distance); 
+    out += "\n}";
     return out;
 }
 
 
-std::string GeoWriter::buildGraphGeoJson(std::vector<Vec2Sphere> &nodes, std::vector<int> &sources, std::vector<int> &targets, std::vector<Vec2Sphere> &drawNodes) {
+std::string GeoWriter::buildGraphGeoJson(std::vector<Vec2Sphere> &nodes, std::vector<int> &sources, std::vector<int> &targets) {
     std::string out = "{\"type\": \"FeatureCollection\",\n"
     "\"features\":[ \n";
-    for (int i = 0; i < sources.size(); i++) {
+    int endIndex = std::floor(sources.size() / 2) + 10000;
+    for (int i = std::floor(sources.size() / 2) - 10000; i < endIndex; i++) {
         out += "{";
         out += "    \"type\": \"Feature\",\n"
         "    \"geometry\": {\n"
@@ -87,27 +89,27 @@ std::string GeoWriter::buildGraphGeoJson(std::vector<Vec2Sphere> &nodes, std::ve
         out += "[" + std::to_string(tLonSrc) + "," + std::to_string(nodes[sources[i]].lat) + "],\n";
         out += "[" + std::to_string(tLonTrg) + "," + std::to_string(nodes[targets[i]].lat) + "]\n";
         out += "]}, \"properties\": {}}";
-        if (i < sources.size() - 1) {
+        if (i < endIndex - 1) {
             out += ",";
         }
     }
-    bool drawPoints = false;
-    if (drawPoints) {
-        out += ",";
-        for (int i = 0; i < drawNodes.size(); i++) {
-            out += "{";
-            out += "    \"type\": \"Feature\",\n"
-            "    \"geometry\": {\n"
-            "       \"type\": \"Point\",\n"
-            "       \"coordinates\": \n";
-            out += "[" + std::to_string(drawNodes[i].lon) + "," + std::to_string(drawNodes[i].lat) + "]\n";
-            out += "}, \"properties\": {}}";
-            if (i < drawNodes.size() - 1) {
-                out += ",";
-            }
-        }
+    // bool drawPoints = false;
+    // if (drawPoints) {
+    //     out += ",";
+    //     for (int i = 0; i < drawNodes.size(); i++) {
+    //         out += "{";
+    //         out += "    \"type\": \"Feature\",\n"
+    //         "    \"geometry\": {\n"
+    //         "       \"type\": \"Point\",\n"
+    //         "       \"coordinates\": \n";
+    //         out += "[" + std::to_string(drawNodes[i].lon) + "," + std::to_string(drawNodes[i].lat) + "]\n";
+    //         out += "}, \"properties\": {}}";
+    //         if (i < drawNodes.size() - 1) {
+    //             out += ",";
+    //         }
+    //     }
 
-    }
+    // }
 
     out += "]}";
     return out;

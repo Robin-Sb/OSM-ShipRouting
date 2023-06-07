@@ -100,10 +100,10 @@ int main() {
     } else {
         generate_graph(graph, 1000000);
     }
-    std::string graph_json = GeoWriter::buildGraphGeoJson(graph.nodes, graph.sources, graph.targets);
-    //std::string nodes_json = GeoWriter::buildNodesGeoJson(graph.nodes);
-    GeoWriter::writeToDisk(graph_json, "../files/graph_fin.json");
     startServer(graph);
+    // std::string graph_json = GeoWriter::buildGraphGeoJson(graph.nodes, graph.sources, graph.targets);
+    // std::string nodes_json = GeoWriter::buildNodesGeoJson(graph.nodes);
+    // GeoWriter::writeToDisk(graph_json, "../files/graph_fin.json");
     //GeoWriter::writeToDisk(nodes_json, "../files/nodes_rand.json");
     // std::string path_json = GeoWriter::buildPathGeoJson(resultPath);
     // GeoWriter::writeToDisk(path_json, "../files/result_path.json");

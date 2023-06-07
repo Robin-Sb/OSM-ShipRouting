@@ -23,15 +23,16 @@ function updateEnd(newValue) {
     document.getElementById("end_display").innerHTML = "Latitude: " + newLat + ", Longitude: " + newLng;
 }
 
+// async function demoGraph() {
+//     const response = await fetch("graph_fin.json");
+//     let geojson = await response.json();
+//     L.geoJSON(geojson).addTo(map);
+// }
 
 async function startRequest() {
     //event.preventDefault();
     if (!coordsStart || !coordsEnd)
         return;
-    // let lat1Val = document.getElementById("lat1").value;
-    // let lon1Val = document.getElementById("lon1").value;
-    // let lat2Val = document.getElementById("lat2").value;
-    // let lon2Val = document.getElementById("lon2").value;
     let url = "http://localhost:8080?" + new URLSearchParams({
         lat1: coordsStart.lat,
         lon1: coordsStart.lng,
@@ -60,6 +61,7 @@ async function startRequest() {
     map.setView(new L.LatLng(coordsStart.lat, coordsEnd.lng), 3);
 }
 
+demoGraph();
 
 map.on("click", (event) => {
     if (active == "start")

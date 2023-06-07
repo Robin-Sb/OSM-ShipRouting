@@ -73,19 +73,25 @@ std::string GeoWriter::buildPathGeoJson(ResultDTO &result) {
 std::string GeoWriter::buildGraphGeoJson(std::vector<Vec2Sphere> &nodes, std::vector<int> &sources, std::vector<int> &targets) {
     std::string out = "{\"type\": \"FeatureCollection\",\n"
     "\"features\":[ \n";
-    int endIndex = std::floor(sources.size() / 2) + 10000;
-    for (int i = std::floor(sources.size() / 2) - 10000; i < endIndex; i++) {
-        out += "{";
-        out += "    \"type\": \"Feature\",\n"
-        "    \"geometry\": {\n"
-        "       \"type\": \"LineString\",\n"
-        "       \"coordinates\": [\n";
+    int startIndex = 0; std::floor(sources.size() / 2) - 50000;
+    int endIndex = sources.size(); std::floor(sources.size() / 2) + 50000;
+    for (int i = startIndex; i < endIndex; i++) {
         float tLonSrc = nodes[sources[i]].lon;
         float tLonTrg = nodes[targets[i]].lon;
         if (nodes[sources[i]].lon < -175 && nodes[targets[i]].lon > 175) 
             tLonSrc = 180 + (180 + nodes[sources[i]].lon);
         if (nodes[sources[i]].lon > 175 && nodes[targets[i]].lon < -175)
             tLonTrg = 180 + (180 + nodes[targets[i]].lon);
+
+        if (nodes[sources[i]].lat > 14 || nodes[sources[i]].lat < -17)
+            continue;
+        if (tLonSrc < 90 || tLonSrc > 115) 
+            continue; 
+        out += "{";
+        out += "    \"type\": \"Feature\",\n"
+        "    \"geometry\": {\n"
+        "       \"type\": \"LineString\",\n"
+        "       \"coordinates\": [\n";
         out += "[" + std::to_string(tLonSrc) + "," + std::to_string(nodes[sources[i]].lat) + "],\n";
         out += "[" + std::to_string(tLonTrg) + "," + std::to_string(nodes[targets[i]].lat) + "]\n";
         out += "]}, \"properties\": {}}";
@@ -108,7 +114,6 @@ std::string GeoWriter::buildGraphGeoJson(std::vector<Vec2Sphere> &nodes, std::ve
     //             out += ",";
     //         }
     //     }
-
     // }
 
     out += "]}";

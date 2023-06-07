@@ -125,6 +125,9 @@ void Graph::readNodes(std::ifstream &file, int n) {
 
 void Graph::addNodeConcurrent(std::vector<Vec2Sphere> &allNodes, int rangeStart, int rangeEnd, InPolyTest &polyTest, std::shared_ptr<std::vector<Vec2Sphere>> outNodes) {
     for (int i = rangeStart; i < rangeEnd; i++) {
+        // brute force antarctica case because coastline only goes to -85.0511
+        if (allNodes[i].lat < -85)
+            continue;
         if (!polyTest.performPointInPolyTest(allNodes[i])) {
             outNodes->push_back(allNodes[i]);
         }
@@ -139,14 +142,15 @@ void Graph::generate(int n, std::vector<SingleCoast> coastlines) {
     const float r = 6371;
     std::random_device rand_dev_z;
     std::mt19937 generator_z(rand_dev_z());
-    std::uniform_int_distribution<int> distr_z(-r, r);
+    std::uniform_real_distribution<float> distr_z(-r, r);
     std::random_device rand_dev_phi;
     std::mt19937 generator_phi(rand_dev_phi());
-    std::uniform_int_distribution<int> distr_phi(0, 2 * pi);
+    std::uniform_real_distribution<float> distr_phi(0, 2 * pi);
 
     //std::vector<Vec2Sphere> _nodes;
     // float rad_to_deg = 180 / pi;
     // float goldenRatio = (1 + std::pow(5, 0.5)) / 2;
+    float rad_to_deg = 180 / pi;
     auto start = std::chrono::system_clock::now();
     std::vector<Vec2Sphere> allNodes;
     for (int i = 0; i < n; i++) {
@@ -154,8 +158,8 @@ void Graph::generate(int n, std::vector<SingleCoast> coastlines) {
         float phi = distr_phi(generator_phi);
         float x = std::sqrt(r * r - z * z) * std::cos(phi);
         float y = std::sqrt(r * r - z * z) * std::sin(phi);
-        float lat = std::asin(z / r);
-        float lon = std::atan2(y, x);
+        float lat = std::asin(z / r) * rad_to_deg;
+        float lon = std::atan2(y, x) * rad_to_deg;
 
         // float theta = fmod(pi * (1 + std::pow(5, 0.5)) * i, 2 * pi);
         // float phi = std::acos(1 - 2 * (i+0.5)/n);

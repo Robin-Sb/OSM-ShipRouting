@@ -33,6 +33,7 @@ class InPolyTest {
         InPolyTest(std::vector<SingleCoast> _coastlines);
         std::vector<SingleCoast> coastlines;
         bool performPointInPolyTest(Vec2Sphere point);
+        std::vector<Vec2Sphere> cutEdges;
 
     private: 
         std::vector<BoundingPolygon> bps;

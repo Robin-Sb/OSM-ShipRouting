@@ -69,6 +69,26 @@ std::string GeoWriter::buildPathGeoJson(ResultDTO &result) {
     return out;
 }
 
+std::string GeoWriter::buildLineSegmentsJson(std::vector<Vec2Sphere> lineSegments) {
+    std::string out = "{\"type\": \"FeatureCollection\",\n"
+    "\"features\": [ \n";
+    for (int i = 0; i < lineSegments.size(); i+=2) {
+        out += "{";
+        out += "    \"type\": \"Feature\",\n"
+        "    \"geometry\": {\n"
+        "       \"type\": \"LineString\",\n"
+        "       \"coordinates\": [\n";
+        out += "[" + std::to_string(lineSegments[i].lon) + "," + std::to_string(lineSegments[i].lat) + "],\n";
+        out += "[" + std::to_string(lineSegments[i+1].lon) + "," + std::to_string(lineSegments[i+1].lat) + "]\n";
+        out += "]}, \"properties\": {\"stroke\": \"#ff0000\", \"stroke-width\": 10}}";
+        if (i < lineSegments.size() - 2) {
+            out += ",";
+        }
+    }
+    out += "]}";
+    return out;
+}
+
 
 std::string GeoWriter::buildGraphGeoJson(std::vector<Vec2Sphere> &nodes, std::vector<int> &sources, std::vector<int> &targets) {
     std::string out = "{\"type\": \"FeatureCollection\",\n"

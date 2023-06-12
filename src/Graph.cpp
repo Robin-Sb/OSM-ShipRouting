@@ -147,9 +147,6 @@ void Graph::generate(int n, std::vector<SingleCoast> coastlines) {
     std::mt19937 generator_phi(rand_dev_phi());
     std::uniform_real_distribution<float> distr_phi(0, 2 * pi);
 
-    //std::vector<Vec2Sphere> _nodes;
-    // float rad_to_deg = 180 / pi;
-    // float goldenRatio = (1 + std::pow(5, 0.5)) / 2;
     float rad_to_deg = 180 / pi;
     auto start = std::chrono::system_clock::now();
     std::vector<Vec2Sphere> allNodes;
@@ -160,11 +157,6 @@ void Graph::generate(int n, std::vector<SingleCoast> coastlines) {
         float y = std::sqrt(r * r - z * z) * std::sin(phi);
         float lat = std::asin(z / r) * rad_to_deg;
         float lon = std::atan2(y, x) * rad_to_deg;
-
-        // float theta = fmod(pi * (1 + std::pow(5, 0.5)) * i, 2 * pi);
-        // float phi = std::acos(1 - 2 * (i+0.5)/n);
-        // float lat = phi * rad_to_deg - 90;
-        // float lon = theta * rad_to_deg - 180;
         Vec2Sphere node = Vec2Sphere(lat, lon);
         allNodes.push_back(node);
     }

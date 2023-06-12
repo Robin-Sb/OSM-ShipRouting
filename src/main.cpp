@@ -104,18 +104,13 @@ int main() {
     osmium::apply(reader, location_handler, handler);
     reader.close();
     CoastlineStitcher stitcher = CoastlineStitcher(handler.coastlines);
-    std::vector<SingleCoast> coastlines = stitcher.stitchCL2();
-    // std::vector<SingleCoast> sweden {coastlines[16]};
-    // std::string sweden_poly = GeoWriter::buildPolygonGeoJson(sweden);
-    // GeoWriter::writeToDisk(sweden_poly, "../files/sweden.json");
+    std::vector<SingleCoast> coastlines = stitcher.stitchCoastlines();
     InPolyTest polyTest = InPolyTest(coastlines);
     polyTest.performPointInPolyTest(Vec2Sphere(36.991173, 101.414398));
     std::string result_edges = GeoWriter::buildLineSegmentsJson(polyTest.cutEdges);
     GeoWriter::writeToDisk(result_edges, "../files/cutEdges.json");
-    // polyTest.performPointInPolyTest(Vec2Sphere(-26.6561, 119.5435));
-    // polyTest.performPointInPolyTest(Vec2Sphere(-30.212402, 144.954498));
-    // Graph graph = Graph();
-    // graph.generate(10000, coastlines);
+    Graph graph = Graph();
+    graph.generate(10000, coastlines);
     //std::vector<SingleCoast> coastlines = stitcher.stitchCoastlines();
 
     // Graph graph = Graph();
@@ -128,8 +123,8 @@ int main() {
     // std::string graph_json = GeoWriter::buildGraphGeoJson(graph.nodes, graph.sources, graph.targets);
     // GeoWriter::writeToDisk(graph_json, "../files/graph_fin.json");
     // startServer(graph);
-    // std::string nodes_json = GeoWriter::buildNodesGeoJson(graph.nodes);
-    // GeoWriter::writeToDisk(nodes_json, "../files/nodes_test.json");
+    std::string nodes_json = GeoWriter::buildNodesGeoJson(graph.nodes);
+    GeoWriter::writeToDisk(nodes_json, "../files/nodes_test.json");
     // std::string path_json = GeoWriter::buildPathGeoJson(resultPath);
     // GeoWriter::writeToDisk(path_json, "../files/result_path.json");
     return 0;

@@ -21,19 +21,13 @@ CoastlineStitcher::CoastlineStitcher(std::vector<SingleCoast> &_coastlines) {
     coastlines = _coastlines;
 }
 
-std::vector<SingleCoast> CoastlineStitcher::stitchCL2() {
+std::vector<SingleCoast> CoastlineStitcher::stitchCoastlines() {
     // first páss, fill hashmap so that we can find references easily
     std::unordered_map<Node, int, Node::HashFunction> map;
     std::unordered_map<int, int> idMap;
-    //std::unordered_map<float, int> lonMap;
     for (int i = 0; i < coastlines.size(); i++) {
-        // if (startIds.find(coastlines[i].path[0].id) != startIds.end()) {
-        //     int idx = startIds.find(coastlines[i].path[0].id)->second;
-        //     std::cout << idx << std::endl;
-        // }
         idMap.insert(std::make_pair(coastlines[i].path[0].id, i));
         map.insert(std::make_pair(coastlines[i].path[0], i));
-        //lonMap.insert(std::make_pair(coastlines[i].path[0].lon, i));
     }
 
     std::vector<bool> isProcessed(coastlines.size(), false);
@@ -41,35 +35,34 @@ std::vector<SingleCoast> CoastlineStitcher::stitchCL2() {
     for (int i = 0; i < coastlines.size(); i++) {
         if (isProcessed[i])
             continue;
-        bool startFound = false;
         SingleCoast coastline = coastlines[i];
-        while (!startFound) {
-            // bool nextStartExists = !(startIds.find(coastline.path[coastline.path.size()- 1].id) == startIds.end());
+        while (true) {
+            // first, try to find by lat/lng
             int nextStart = map.find(coastline.path[coastline.path.size()- 1])->second;
-            // int nextLon = latMap.find(coastline.path[coastline.path.size()- 1].lat)->second;
 
-            // maybe we need id as backup for this case
             if (isProcessed[nextStart]) {
+                // case where there are multiple points at the same spot (degenerate) -> use id as backup
                 int nextId = idMap.find(coastline.path[coastline.path.size() - 1].id)->second;
                 if (nextId != i)
                     nextStart = nextId;
                 else 
                     break;
+                
+                // case where the next point is old, but different from the last point we have seen -> avoid loop by breaking
+                if (coastlines[nextStart].path[0].lat != coastline.path[coastline.path.size() - 1].lat &&
+                    coastlines[nextStart].path[0].lon != coastline.path[coastline.path.size() - 1].lon)
+                    break;
             }
-            if (isProcessed[nextStart] && 
-            (coastlines[nextStart].path[0].lat != coastline.path[coastline.path.size() - 1].lat &&
-            coastlines[nextStart].path[0].lon != coastline.path[coastline.path.size() - 1].lon))
-                break;
+
+            // only process every coastline once 
             isProcessed[nextStart] = true;
-            if (nextStart == i) {
-                startFound = true;
+            // beginning matches end -> coastline complete
+            if (nextStart == i) 
                 break;
-            }
+            
+            // if the next point is valid, attach the coastline
             for (int j = 1; j < coastlines[nextStart].path.size(); j++) {
                 coastline.path.push_back(coastlines[nextStart].path[j]);
-                if (coastlines[nextStart].path[j].lat > 64.24511690744968 && coastlines[nextStart].path[j].lat < 64.26167107219204 && 
-                coastlines[nextStart].path[j].lon >  21.163101196289062 && coastlines[nextStart].path[j].lon < 21.189708709716797)
-                    std::cout << i << std::endl;
             }
         }
         result.push_back(coastline);
@@ -79,112 +72,111 @@ std::vector<SingleCoast> CoastlineStitcher::stitchCL2() {
 
 
 
-std::vector<SingleCoast> CoastlineStitcher::stitchCoastlines() {
-    for (int i = 0; i < coastlines.size(); i++) {
-        if (coastlines[i].path[0].lat < 59 && coastlines[i].path[0].lat > 49.9 && coastlines[i].path[0].lon > -6 && coastlines[i].path[0].lon < 2)
-            std::cout << "CL found" << std::endl;
-        processSingleCoastline(i);
-    }
-    // filter inactive coastlines
-    std::vector<SingleCoast> result;
-    for (int i = 0; i < updatedCoastlines.size(); i++) {
-        if (isCLActive[i])
-            result.push_back(updatedCoastlines[i]);
-    }
-    return result;
-}
+// std::vector<SingleCoast> CoastlineStitcher::stitchCoastlines() {
+//     for (int i = 0; i < coastlines.size(); i++) {
+//         if (coastlines[i].path[0].lat < 59 && coastlines[i].path[0].lat > 49.9 && coastlines[i].path[0].lon > -6 && coastlines[i].path[0].lon < 2)
+//             std::cout << "CL found" << std::endl;
+//         processSingleCoastline(i);
+//     }
+//     // filter inactive coastlines
+//     std::vector<SingleCoast> result;
+//     for (int i = 0; i < updatedCoastlines.size(); i++) {
+//         if (isCLActive[i])
+//             result.push_back(updatedCoastlines[i]);
+//     }
+//     return result;
+// }
 
-void CoastlineStitcher::handleCaseUnseen(int i) {
-    // append the coastline
-    updatedCoastlines.push_back(coastlines[i]);
-    // manage inactive coastlines for the sandwich case
-    isCLActive.push_back(false);
-    // store first and list node id in hashmap
-    processedCoastlines.insert(std::make_pair(coastlines[i].path[0].id, updatedCoastlines.size() - 1));
-    processedCoastlines.insert(std::make_pair(coastlines[i].path[coastlines[i].path.size() - 1].id, updatedCoastlines.size() - 1));
-}
+// void CoastlineStitcher::handleCaseUnseen(int i) {
+//     // append the coastline
+//     updatedCoastlines.push_back(coastlines[i]);
+//     // manage inactive coastlines for the sandwich case
+//     isCLActive.push_back(false);
+//     // store first and list node id in hashmap
+//     processedCoastlines.insert(std::make_pair(coastlines[i].path[0].id, updatedCoastlines.size() - 1));
+//     processedCoastlines.insert(std::make_pair(coastlines[i].path[coastlines[i].path.size() - 1].id, updatedCoastlines.size() - 1));
+// }
 
 // the first node of the currently checked coastline is already in the hashmap
 // this must be the end of another coastline -> just append
-int CoastlineStitcher::handleCaseStartMatchesEnd(int i) {
-    int coastIndex = processedCoastlines.find(coastlines[i].path[0].id)->second;
-    // just append all nodes to the new coastline
-    for (int j = 1; j < coastlines[i].path.size(); j++) {
-        updatedCoastlines[coastIndex].path.push_back(coastlines[i].path[j]);
-    }
-    // erase the last vertex from the old coastline
-    processedCoastlines.erase(coastlines[i].path[0].id);
-    // the new endpoint of the coastline is the last vertex of the new coastline
-    processedCoastlines.insert(std::make_pair(coastlines[i].path[coastlines[i].path.size() - 1].id, coastIndex));
-    return coastIndex;
-}
+// int CoastlineStitcher::handleCaseStartMatchesEnd(int i) {
+//     int coastIndex = processedCoastlines.find(coastlines[i].path[0].id)->second;
+//     // just append all nodes to the new coastline
+//     for (int j = 1; j < coastlines[i].path.size(); j++) {
+//         updatedCoastlines[coastIndex].path.push_back(coastlines[i].path[j]);
+//     }
+//     // erase the last vertex from the old coastline
+//     processedCoastlines.erase(coastlines[i].path[0].id);
+//     // the new endpoint of the coastline is the last vertex of the new coastline
+//     processedCoastlines.insert(std::make_pair(coastlines[i].path[coastlines[i].path.size() - 1].id, coastIndex));
+//     return coastIndex;
+// }
 
-void CoastlineStitcher::handleCaseFinishedCoastline(int i, int coastIndexStart, int coastIndexEnd) {
-    // it kind of does not matter what is erased here, none of these will be called later and they map to the same path anyways
-    processedCoastlines.erase(coastlines[i].path[0].id);
-    processedCoastlines.erase(updatedCoastlines[coastIndexEnd].path[0].id);
-    // only finished coastlines are set to active
-    isCLActive[coastIndexStart] = true;
-}
+// void CoastlineStitcher::handleCaseFinishedCoastline(int i, int coastIndexStart, int coastIndexEnd) {
+//     // it kind of does not matter what is erased here, none of these will be called later and they map to the same path anyways
+//     processedCoastlines.erase(coastlines[i].path[0].id);
+//     processedCoastlines.erase(updatedCoastlines[coastIndexEnd].path[0].id);
+//     // only finished coastlines are set to active
+//     isCLActive[coastIndexStart] = true;
+// }
 
-void CoastlineStitcher::handleCaseSandwich(int i, int coastIndexStart, int coastIndexEnd) {
-    std::vector<Node> newPath;
-    for (int j = 0; j < updatedCoastlines[coastIndexEnd].path.size(); j++) {
-        newPath.push_back(updatedCoastlines[coastIndexEnd].path[j]);
-    }
+// void CoastlineStitcher::handleCaseSandwich(int i, int coastIndexStart, int coastIndexEnd) {
+//     std::vector<Node> newPath;
+//     for (int j = 0; j < updatedCoastlines[coastIndexEnd].path.size(); j++) {
+//         newPath.push_back(updatedCoastlines[coastIndexEnd].path[j]);
+//     }
 
-    for (int j = 1; j < updatedCoastlines[coastIndexStart].path.size(); j++) {
-        newPath.push_back(updatedCoastlines[coastIndexStart].path[j]);
-    }
+//     for (int j = 1; j < updatedCoastlines[coastIndexStart].path.size(); j++) {
+//         newPath.push_back(updatedCoastlines[coastIndexStart].path[j]);
+//     }
 
-    updatedCoastlines[coastIndexStart].path = newPath;
-    // since the coastline belonging to coastIndexEnd is inactive now, reset its value to coastIndexStart
-    processedCoastlines.erase(coastlines[i].path[0].id);
-    processedCoastlines.erase(coastlines[i].path[coastlines[i].path.size() - 1].id);
-    processedCoastlines.erase(updatedCoastlines[coastIndexEnd].path[0].id);
-    processedCoastlines.insert(std::make_pair(updatedCoastlines[coastIndexEnd].path[0].id, coastIndexStart));
-}
+//     updatedCoastlines[coastIndexStart].path = newPath;
+//     // since the coastline belonging to coastIndexEnd is inactive now, reset its value to coastIndexStart
+//     processedCoastlines.erase(coastlines[i].path[0].id);
+//     processedCoastlines.erase(coastlines[i].path[coastlines[i].path.size() - 1].id);
+//     processedCoastlines.erase(updatedCoastlines[coastIndexEnd].path[0].id);
+//     processedCoastlines.insert(std::make_pair(updatedCoastlines[coastIndexEnd].path[0].id, coastIndexStart));
+// }
 
-void CoastlineStitcher::handleCaseOnlyEndMatchesStart(int i, int coastIndex) {
-    std::vector<Node> newPath;
-    for (int j = 0; j < coastlines[i].path.size(); j++) {
-        newPath.push_back(coastlines[i].path[j]);
-    }
+// void CoastlineStitcher::handleCaseOnlyEndMatchesStart(int i, int coastIndex) {
+//     std::vector<Node> newPath;
+//     for (int j = 0; j < coastlines[i].path.size(); j++) {
+//         newPath.push_back(coastlines[i].path[j]);
+//     }
 
-    for (int j = 1; j < updatedCoastlines[coastIndex].path.size(); j++) {
-        newPath.push_back(updatedCoastlines[coastIndex].path[j]);
-    }
-    processedCoastlines.erase(updatedCoastlines[coastIndex].path[0].id);
-    updatedCoastlines[coastIndex].path = newPath;
-    processedCoastlines.insert(std::make_pair(coastlines[i].path[0].id, coastIndex));
-}
+//     for (int j = 1; j < updatedCoastlines[coastIndex].path.size(); j++) {
+//         newPath.push_back(updatedCoastlines[coastIndex].path[j]);
+//     }
+//     processedCoastlines.erase(updatedCoastlines[coastIndex].path[0].id);
+//     updatedCoastlines[coastIndex].path = newPath;
+//     processedCoastlines.insert(std::make_pair(coastlines[i].path[0].id, coastIndex));
+// }
 
-void CoastlineStitcher::processSingleCoastline(int i) {
-    int pathLength = coastlines[i].path.size();
-    bool firstNodeExists = !(processedCoastlines.find(coastlines[i].path[0].id) == processedCoastlines.end());
-    bool lastNodeExists = !(processedCoastlines.find(coastlines[i].path[pathLength - 1].id) == processedCoastlines.end());
-    // standard case -> new coastline, append to the existing coastline and store the index in hashmap
-    if (!firstNodeExists && !lastNodeExists) {
-        handleCaseUnseen(i);
-    }
-    int coastIndexEnd;
-    if (firstNodeExists) {
-        coastIndexEnd = handleCaseStartMatchesEnd(i);
-    }
+// void CoastlineStitcher::processSingleCoastline(int i) {
+//     int pathLength = coastlines[i].path.size();
+//     bool firstNodeExists = !(processedCoastlines.find(coastlines[i].path[0].id) == processedCoastlines.end());
+//     bool lastNodeExists = !(processedCoastlines.find(coastlines[i].path[pathLength - 1].id) == processedCoastlines.end());
+//     // standard case -> new coastline, append to the existing coastline and store the index in hashmap
+//     if (!firstNodeExists && !lastNodeExists) {
+//         handleCaseUnseen(i);
+//     }
+//     int coastIndexEnd;
+//     if (firstNodeExists) {
+//         coastIndexEnd = handleCaseStartMatchesEnd(i);
+//     }
 
-    if (lastNodeExists) {
-        int coastIndexStart = processedCoastlines.find(coastlines[i].path[coastlines[i].path.size() - 1].id)->second;
-        if (firstNodeExists) { 
-            // start and end are the same -> finished coastline -> do nothing
-            if (coastIndexStart == coastIndexEnd) {
-                handleCaseFinishedCoastline(i, coastIndexStart, coastIndexEnd);
-                return;
-            }
-            // start and end are not the same -> sandwich case
-            handleCaseSandwich(i, coastIndexStart, coastIndexEnd);
-        } else {
-            handleCaseOnlyEndMatchesStart(i, coastIndexStart);
-        }
-    }
-
-}
+//     if (lastNodeExists) {
+//         int coastIndexStart = processedCoastlines.find(coastlines[i].path[coastlines[i].path.size() - 1].id)->second;
+//         if (firstNodeExists) { 
+//             // start and end are the same -> finished coastline -> do nothing
+//             if (coastIndexStart == coastIndexEnd) {
+//                 handleCaseFinishedCoastline(i, coastIndexStart, coastIndexEnd);
+//                 return;
+//             }
+//             // start and end are not the same -> sandwich case
+//             handleCaseSandwich(i, coastIndexStart, coastIndexEnd);
+//         } else {
+//             handleCaseOnlyEndMatchesStart(i, coastIndexStart);
+//         }
+//     }
+// }

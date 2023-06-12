@@ -17,12 +17,72 @@ void CoastHandler::way(const osmium::Way& way) {
 
 void CoastHandler::node(const osmium::Node& node) {};
 
-CoastlineStitcher::CoastlineStitcher(std::vector<SingleCoast> _coastlines) {
+CoastlineStitcher::CoastlineStitcher(std::vector<SingleCoast> &_coastlines) {
     coastlines = _coastlines;
 }
 
+std::vector<SingleCoast> CoastlineStitcher::stitchCL2() {
+    // first páss, fill hashmap so that we can find references easily
+    std::unordered_map<Node, int, Node::HashFunction> map;
+    std::unordered_map<int, int> idMap;
+    //std::unordered_map<float, int> lonMap;
+    for (int i = 0; i < coastlines.size(); i++) {
+        // if (startIds.find(coastlines[i].path[0].id) != startIds.end()) {
+        //     int idx = startIds.find(coastlines[i].path[0].id)->second;
+        //     std::cout << idx << std::endl;
+        // }
+        idMap.insert(std::make_pair(coastlines[i].path[0].id, i));
+        map.insert(std::make_pair(coastlines[i].path[0], i));
+        //lonMap.insert(std::make_pair(coastlines[i].path[0].lon, i));
+    }
+
+    std::vector<bool> isProcessed(coastlines.size(), false);
+    std::vector<SingleCoast> result;
+    for (int i = 0; i < coastlines.size(); i++) {
+        if (isProcessed[i])
+            continue;
+        bool startFound = false;
+        SingleCoast coastline = coastlines[i];
+        while (!startFound) {
+            // bool nextStartExists = !(startIds.find(coastline.path[coastline.path.size()- 1].id) == startIds.end());
+            int nextStart = map.find(coastline.path[coastline.path.size()- 1])->second;
+            // int nextLon = latMap.find(coastline.path[coastline.path.size()- 1].lat)->second;
+
+            // maybe we need id as backup for this case
+            if (isProcessed[nextStart]) {
+                int nextId = idMap.find(coastline.path[coastline.path.size() - 1].id)->second;
+                if (nextId != i)
+                    nextStart = nextId;
+                else 
+                    break;
+            }
+            if (isProcessed[nextStart] && 
+            (coastlines[nextStart].path[0].lat != coastline.path[coastline.path.size() - 1].lat &&
+            coastlines[nextStart].path[0].lon != coastline.path[coastline.path.size() - 1].lon))
+                break;
+            isProcessed[nextStart] = true;
+            if (nextStart == i) {
+                startFound = true;
+                break;
+            }
+            for (int j = 1; j < coastlines[nextStart].path.size(); j++) {
+                coastline.path.push_back(coastlines[nextStart].path[j]);
+                if (coastlines[nextStart].path[j].lat > 64.24511690744968 && coastlines[nextStart].path[j].lat < 64.26167107219204 && 
+                coastlines[nextStart].path[j].lon >  21.163101196289062 && coastlines[nextStart].path[j].lon < 21.189708709716797)
+                    std::cout << i << std::endl;
+            }
+        }
+        result.push_back(coastline);
+    }
+    return result;
+}
+
+
+
 std::vector<SingleCoast> CoastlineStitcher::stitchCoastlines() {
     for (int i = 0; i < coastlines.size(); i++) {
+        if (coastlines[i].path[0].lat < 59 && coastlines[i].path[0].lat > 49.9 && coastlines[i].path[0].lon > -6 && coastlines[i].path[0].lon < 2)
+            std::cout << "CL found" << std::endl;
         processSingleCoastline(i);
     }
     // filter inactive coastlines

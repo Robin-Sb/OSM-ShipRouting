@@ -83,9 +83,9 @@ std::string GeoWriter::buildGraphGeoJson(std::vector<Vec2Sphere> &nodes, std::ve
         if (nodes[sources[i]].lon > 175 && nodes[targets[i]].lon < -175)
             tLonTrg = 180 + (180 + nodes[targets[i]].lon);
 
-        if (nodes[sources[i]].lat > 14 || nodes[sources[i]].lat < -17)
+        if (nodes[sources[i]].lat < 50 || nodes[sources[i]].lat > 60)
             continue;
-        if (tLonSrc < 90 || tLonSrc > 115) 
+        if (tLonSrc < -15 || tLonSrc > 3) 
             continue; 
         out += "{";
         out += "    \"type\": \"Feature\",\n"

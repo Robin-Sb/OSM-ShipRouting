@@ -82,7 +82,7 @@ bool InPolyTest::performPointInPolyTest(Vec2Sphere point) {
 
 Location InPolyTest::isPointInPolygon(std::vector<Node> &polygon, Vec2Sphere point) {
     // use north pole, since it's defo outside of every polygon, longitude is arbitrary
-    Vec2Sphere ref = Vec2Sphere(90, 0);
+    Vec2Sphere ref = Vec2Sphere(26, -47);
     if (polygon.size() == 0)
         return Location::ERROR;
 

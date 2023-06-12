@@ -19,7 +19,7 @@ using index_type = osmium::index::map::FlexMem<osmium::unsigned_object_id_type, 
 // The location handler always depends on the index type
 using location_handler_type = osmium::handler::NodeLocationsForWays<index_type>;
 
-void generate_graph(Graph &graph, int amount) {
+void generate_graph(Graph &graph, int amount, std::string &filename) {
     auto otypes = osmium::osm_entity_bits::node | osmium::osm_entity_bits::way;
     osmium::io::File input_file{"../files/planet-coastlinespbf-cleanedosm.pbf"};
     //osmium::io::File input_file{"../files/antarctica-latest.osm.pbf"};
@@ -34,7 +34,7 @@ void generate_graph(Graph &graph, int amount) {
     std::vector<SingleCoast> coastlines = stitcher.stitchCoastlines();
     graph.generate(amount, coastlines);
     std::string graph_fmi = GeoWriter::generateFMI(graph.nodes, graph.sources, graph.targets, graph.costs);
-    GeoWriter::writeToDisk(graph_fmi, "../graph.fmi");
+    GeoWriter::writeToDisk(graph_fmi, filename);
 }
 
 int getStart(std::string &query, std::string name) {
@@ -93,18 +93,41 @@ bool checkIfFileExists(std::string &fileName) {
 }
 
 int main() {
+    auto otypes = osmium::osm_entity_bits::node | osmium::osm_entity_bits::way;
+    osmium::io::File input_file{"../files/planet-coastlinespbf-cleanedosm.pbf"};
+    //osmium::io::File input_file{"../files/antarctica-latest.osm.pbf"};
+    osmium::io::Reader reader{input_file, otypes};
+    
+    index_type index;
+    location_handler_type location_handler{index};
+    CoastHandler handler;
+    osmium::apply(reader, location_handler, handler);
+    reader.close();
+    CoastlineStitcher stitcher = CoastlineStitcher(handler.coastlines);
+    std::vector<SingleCoast> coastlines = stitcher.stitchCL2();
+    // std::vector<SingleCoast> sweden {coastlines[16]};
+    // std::string sweden_poly = GeoWriter::buildPolygonGeoJson(sweden);
+    // GeoWriter::writeToDisk(sweden_poly, "../files/sweden.json");
+    // InPolyTest polyTest = InPolyTest(coastlines);
+    // polyTest.performPointInPolyTest(Vec2Sphere(-30.0814, 144.4628));
+    // polyTest.performPointInPolyTest(Vec2Sphere(-26.6561, 119.5435));
+    // polyTest.performPointInPolyTest(Vec2Sphere(-30.212402, 144.954498));
     Graph graph = Graph();
-    std::string filename = "../graph.fmi";
-    if (checkIfFileExists(filename)) {
-        graph.buildFromFMI(filename);
-    } else {
-        generate_graph(graph, 1000000);
-    }
-    startServer(graph);
+    graph.generate(10000, coastlines);
+    //std::vector<SingleCoast> coastlines = stitcher.stitchCoastlines();
+
+    // Graph graph = Graph();
+    // std::string filename = "../graph.fmi";
+    // if (checkIfFileExists(filename)) {
+    //     graph.buildFromFMI(filename);
+    // } else {
+    //     generate_graph(graph, 1000000, filename);
+    // }
     // std::string graph_json = GeoWriter::buildGraphGeoJson(graph.nodes, graph.sources, graph.targets);
-    // std::string nodes_json = GeoWriter::buildNodesGeoJson(graph.nodes);
     // GeoWriter::writeToDisk(graph_json, "../files/graph_fin.json");
-    //GeoWriter::writeToDisk(nodes_json, "../files/nodes_rand.json");
+    // startServer(graph);
+    std::string nodes_json = GeoWriter::buildNodesGeoJson(graph.nodes);
+    GeoWriter::writeToDisk(nodes_json, "../files/nodes_test.json");
     // std::string path_json = GeoWriter::buildPathGeoJson(resultPath);
     // GeoWriter::writeToDisk(path_json, "../files/result_path.json");
     return 0;

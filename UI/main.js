@@ -23,11 +23,11 @@ function updateEnd(newValue) {
     document.getElementById("end_display").innerHTML = "Latitude: " + newLat + ", Longitude: " + newLng;
 }
 
-// async function demoGraph() {
-//     const response = await fetch("graph_fin.json");
-//     let geojson = await response.json();
-//     L.geoJSON(geojson).addTo(map);
-// }
+async function demoGraph() {
+    const response = await fetch("nodes_ant.json");
+    let geojson = await response.json();
+    L.geoJSON(geojson).addTo(map);
+}
 
 async function startRequest() {
     //event.preventDefault();
@@ -61,7 +61,7 @@ async function startRequest() {
     map.setView(new L.LatLng(coordsStart.lat, coordsEnd.lng), 3);
 }
 
-demoGraph();
+//demoGraph();
 
 map.on("click", (event) => {
     if (active == "start")
@@ -73,7 +73,7 @@ map.on("click", (event) => {
 })
 
 // let form = document.getElementById("locations");
-// form.addEventListener("submit", startRequest)
+// form.addEventListener("submit", startRequest);
 
 document.getElementById("set_start").addEventListener("click", (event) => {
     active = "start";

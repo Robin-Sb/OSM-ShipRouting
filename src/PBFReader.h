@@ -20,12 +20,13 @@ public:
 
 class CoastlineStitcher {
     public:
-        CoastlineStitcher(std::vector<SingleCoast> _coastlines);
+        CoastlineStitcher(std::vector<SingleCoast> &_coastlines);
         std::vector<SingleCoast> coastlines;
         std::vector<SingleCoast> updatedCoastlines;
         std::unordered_map<int, int> processedCoastlines;
         std::vector<bool> isCLActive;
         std::vector<SingleCoast> stitchCoastlines();
+        std::vector<SingleCoast> stitchCL2();
     private:
         void processSingleCoastline(int i);
         void handleCaseUnseen(int i);

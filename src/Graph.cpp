@@ -20,8 +20,13 @@ void Graph::buildFromFMI(std::string fmiFile) {
 
 ResultDTO Graph::performDijkstra(Vec2Sphere startPos, Vec2Sphere endPos) {
     // start the search with the node closest to the selected position
+    auto startNodeSearch = std::chrono::system_clock::now();
     int startIndex = sGrid->findClosestPoint(startPos);
     int endIndex = sGrid->findClosestPoint(endPos);
+    auto endNodeSearch = std::chrono::system_clock::now();
+    std::chrono::duration<double> elapsed_seconds_search = endNodeSearch-startNodeSearch;
+    std::cout << "elapsed time node search: " << elapsed_seconds_search.count() << "s" << std::endl;
+
     std::vector<Vec2Sphere> nodePath;
     if (startIndex == -1) {
         std::cout << "No adjacent node found. Are you starting from land?" << std::endl;
@@ -31,7 +36,12 @@ ResultDTO Graph::performDijkstra(Vec2Sphere startPos, Vec2Sphere endPos) {
         std::cout << "End node not found. Are you trying to travel to land?" << std::endl;
         return ResultDTO(nodePath, -1);
     }
-    return dijkstra(startIndex, endIndex);
+    auto startDijkstra = std::chrono::system_clock::now();
+    ResultDTO result = dijkstra(startIndex, endIndex);
+    auto endDijkstra = std::chrono::system_clock::now();
+    std::chrono::duration<double> elapsed_seconds_dijkstra = endDijkstra-startDijkstra;
+    std::cout << "elapsed time node search: " << elapsed_seconds_dijkstra.count() << "s" << std::endl;
+    return result;
 }
 
 ResultDTO Graph::dijkstra(int source, int target) {
@@ -45,7 +55,7 @@ ResultDTO Graph::dijkstra(int source, int target) {
     }
     dist[source] = 0;
     pq.push(std::make_pair(0, source));
-    std::set<int> explored;
+    std::vector<bool> explored (nodes.size(), false);
 
     while (!pq.empty()) {
         std::pair<int, int> node = pq.top();
@@ -53,10 +63,10 @@ ResultDTO Graph::dijkstra(int source, int target) {
         int u = node.second;
         if (u == target) 
             break;
-        explored.insert(u);
+        explored[u] = true;
         for (int i = offsets[u]; i < offsets[u + 1]; i++) {
             int v = targets[i];
-            if (explored.count(v))
+            if (explored[v])
                 continue;
 
             int altDist = dist[u] + costs[v];

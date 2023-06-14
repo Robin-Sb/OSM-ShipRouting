@@ -1,12 +1,8 @@
 #pragma once
 #include <vector>
-// #include <random>
-// #include "InPolyTest.h"
 #include <fstream>
 #include <queue>
 #include <set>
-// #include <thread>
-// #include <algorithm>
 #include <iostream>
 #include "Utils.h"
 #include "GraphUtils.h"

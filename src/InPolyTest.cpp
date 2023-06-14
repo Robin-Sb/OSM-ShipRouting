@@ -51,8 +51,6 @@ InPolyTest::InPolyTest(std::vector<SingleCoast> _coastlines) {
             bp.lonMax = 180 + (180 + oldMin);
         }
 
-        //std::cout << bp.latMin << std::endl;
-
         // check if south pole in polygon -> special case
         Vec2Sphere southpole = Vec2Sphere(-85.0, 45);
         Location polyTestResult = isPointInPolygon(coastlines[i].path, southpole);
@@ -136,6 +134,7 @@ Location InPolyTest::isPointInPolygon(std::vector<Node> &polygon, Vec2Sphere poi
                 CardinalDirection cd_bp = InPolyTest::isEastOrWest(tLonBtoA, tLonPtoA);
                 if (cd_bref != cd_bp) {
                     n_crossings++; 
+                    // TODO: delete those later, only for debugging purposes
                     cutEdges.push_back(pointA);
                     cutEdges.push_back(pointB);
                 }

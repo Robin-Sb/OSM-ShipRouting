@@ -21,8 +21,8 @@ using location_handler_type = osmium::handler::NodeLocationsForWays<index_type>;
 
 void generate_graph(Graph &graph, int amount, std::string &filename) {
     auto otypes = osmium::osm_entity_bits::node | osmium::osm_entity_bits::way;
-    osmium::io::File input_file{"../files/planet-coastlinespbf-cleanedosm.pbf"};
-    //osmium::io::File input_file{"../files/antarctica-latest.osm.pbf"};
+    //osmium::io::File input_file{"../files/planet-coastlinespbf-cleanedosm.pbf"};
+    osmium::io::File input_file{"../files/antarctica-latest.osm.pbf"};
     osmium::io::Reader reader{input_file, otypes};
     
     index_type index;

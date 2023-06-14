@@ -12,7 +12,6 @@ class GraphGenerator {
         std::vector<int> sources;
         std::vector<int> targets;
         std::vector<int> costs;
-        std::vector<int> offsets;
         std::vector<Vec2Sphere> nodes;
 
         void generate(int n, std::vector<SingleCoast> &coastlines);

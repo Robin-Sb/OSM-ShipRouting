@@ -40,7 +40,7 @@ ResultDTO Graph::performDijkstra(Vec2Sphere startPos, Vec2Sphere endPos) {
     ResultDTO result = dijkstra(startIndex, endIndex);
     auto endDijkstra = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsed_seconds_dijkstra = endDijkstra-startDijkstra;
-    std::cout << "elapsed time node search: " << elapsed_seconds_dijkstra.count() << "s" << std::endl;
+    std::cout << "elapsed time dijkstra: " << elapsed_seconds_dijkstra.count() << "s" << std::endl;
     return result;
 }
 
@@ -61,6 +61,8 @@ ResultDTO Graph::dijkstra(int source, int target) {
         std::pair<int, int> node = pq.top();
         pq.pop();
         int u = node.second;
+        if (explored[u])
+            continue;
         if (u == target) 
             break;
         explored[u] = true;

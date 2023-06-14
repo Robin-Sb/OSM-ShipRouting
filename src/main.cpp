@@ -92,13 +92,13 @@ bool checkIfFileExists(std::string &fileName) {
     return infile.good();
 }
 
-// void graph_tests(Graph &graph) {
-//     graph.performDijkstra(Vec2Sphere(-34.016241889667015, -96.50390625000001), Vec2Sphere(-27.68352808378776, -28.652343750000004));
-//     graph.performDijkstra(Vec2Sphere(32.694865977875075, 161.71875000000003), Vec2Sphere(-28.459033019728057, 80.50781250000001));
-//     graph.performDijkstra(Vec2Sphere(-0.3515602939922709, 69.60937500000001), Vec2Sphere(30.29701788337205, -48.33984375));
-//     graph.performDijkstra(Vec2Sphere(-62.75472592723178, 177.71484375), Vec2Sphere(-66.86108230224609, -18.457031250000004));
-//     graph.performDijkstra(Vec2Sphere(58.35563036280967, -20.917968750000004), Vec2Sphere(49.61070993807422, -24.082031250000004));
-// }
+void graph_tests(Graph &graph) {
+    graph.performDijkstra(Vec2Sphere(-34.016241889667015, -96.50390625000001), Vec2Sphere(-27.68352808378776, -28.652343750000004));
+    graph.performDijkstra(Vec2Sphere(32.694865977875075, 161.71875000000003), Vec2Sphere(-28.459033019728057, 80.50781250000001));
+    graph.performDijkstra(Vec2Sphere(-0.3515602939922709, 69.60937500000001), Vec2Sphere(30.29701788337205, -48.33984375));
+    graph.performDijkstra(Vec2Sphere(-62.75472592723178, 177.71484375), Vec2Sphere(-66.86108230224609, -18.457031250000004));
+    graph.performDijkstra(Vec2Sphere(58.35563036280967, -20.917968750000004), Vec2Sphere(49.61070993807422, -24.082031250000004));
+}
 
 int main() {
     Graph graph = Graph();
@@ -108,7 +108,7 @@ int main() {
     } else {
         generate_graph(graph, 4000000, filename);
     }
-    graph_tests(graph);
+    //graph_tests(graph);
     // std::string graph_json = GeoWriter::buildGraphGeoJson(graph.nodes, graph.sources, graph.targets);
     // GeoWriter::writeToDisk(graph_json, "../files/graph_fin.json");
     startServer(graph);

@@ -18,6 +18,7 @@ This requires the following dependencies:
 - Zlib: zlib1g-dev
 - lz4: liblz4-dev
 - boost (at least 1.5.5), e.g. sudo apt-get install libboost-all-dev
+
 ###### Protozero
 My installation: 
 - git clone https://github.com/mapbox/protozero.git to somewhere

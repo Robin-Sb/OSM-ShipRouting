@@ -64,3 +64,13 @@ class Vec2Sphere {
         static float dist(Vec2Sphere ref, Vec2Sphere comp);
 };
 
+
+class Vec2 {
+    public: 
+        Vec2() {};
+        Vec2(float _x, float _y);
+        Vec2(Vec2Sphere sphereBase);
+
+        float x;
+        float y;
+};

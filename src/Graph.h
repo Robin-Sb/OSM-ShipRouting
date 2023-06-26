@@ -7,6 +7,9 @@
 #include "Utils.h"
 #include "GraphUtils.h"
 #include "GraphGenerator.h"
+#include <chrono>
+#include <ctime>    
+
 
 struct ResultDTO {
     ResultDTO(std::vector<Vec2Sphere> &_path, int _distance): path(_path), distance(_distance) {};
@@ -22,7 +25,8 @@ class Graph {
         std::vector<int> costs;
         std::vector<int> offsets;
         std::vector<Vec2Sphere> nodes;
-        ResultDTO performDijkstra(Vec2Sphere startPos, Vec2Sphere endPos);
+        ResultDTO performDijkstraMultiple(int start, std::set<int> endNodes);
+        ResultDTO performDijkstraLogging(Vec2Sphere startPos, Vec2Sphere endPos);
         void generate(int n, std::vector<SingleCoast> &coastlines);
         void buildFromFMI(std::string fmiFile);
         void readNodes(std::ifstream &file, int n);
@@ -32,6 +36,6 @@ class Graph {
         // static void findEdgeConcurrent(std::vector<Vec2Sphere> &allNodes, int startIndex, int endIndex, SphericalGrid &grid,  std::shared_ptr<std::vector<int>> _sources, std::shared_ptr<std::vector<int>> _targets, std::shared_ptr<std::vector<int>> _costs);
         // void performEdgeSearchConcurrent(int n_threads);
     private:
-        std::unique_ptr<SphericalGrid> sGrid;
+        std::shared_ptr<SphericalGrid> sGrid;
         ResultDTO dijkstra(int startIndex, int endIndex);
 };

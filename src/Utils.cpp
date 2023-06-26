@@ -20,3 +20,17 @@ float Vec2Sphere::dist(Vec2Sphere ref, Vec2Sphere comp) {
     return radius * c;
 }
 
+Vec2::Vec2(float _x, float _y) {
+    x = _x;
+    y = _y;
+}
+
+Vec2::Vec2(Vec2Sphere sphereBase) {
+    float pi = 3.14159265359;
+    float deg_to_rad = pi / 180;
+    // define on a unit interval
+    float lon = sphereBase.lon * deg_to_rad;
+    x = ((lon - 0) * std::cos(lon) + pi) / (2 * pi);
+    y = ((sphereBase.lat - 0) * deg_to_rad + (pi / 2)) / pi;
+    //y = std::asinh(std::tan(sphereBase.lat * deg_to_rad));
+}

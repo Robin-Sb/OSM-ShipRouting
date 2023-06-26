@@ -12,6 +12,7 @@
 #include "PBFProcessing.h"
 #include "InPolyTest.h"
 #include "GeoWriter.h"
+#include "TransitNodesRouting.h"
 
 // The type of index used. This must match the include file above
 using index_type = osmium::index::map::FlexMem<osmium::unsigned_object_id_type, osmium::Location>;
@@ -66,7 +67,7 @@ void startServer(Graph & graph) {
             float lat2 = std::stof(query.substr(lat2IdxS, lat2IdxE));
             float lon1 = std::stof(query.substr(lon1IdxS, lon1IdxE));
             float lon2 = std::stof(query.substr(lon2IdxS, lon2IdxE));
-            ResultDTO result = graph.performDijkstra(Vec2Sphere(lat1, lon1), Vec2Sphere(lat2, lon2));
+            ResultDTO result = graph.performDijkstraLogging(Vec2Sphere(lat1, lon1), Vec2Sphere(lat2, lon2));
             std::string path_json = GeoWriter::buildPathGeoJson(result);
             SimpleWeb::CaseInsensitiveMultimap header;
             header.emplace("Access-Control-Allow-Origin", "*");
@@ -93,11 +94,11 @@ bool checkIfFileExists(std::string &fileName) {
 }
 
 void graph_tests(Graph &graph) {
-    graph.performDijkstra(Vec2Sphere(-34.016241889667015, -96.50390625000001), Vec2Sphere(-27.68352808378776, -28.652343750000004));
-    graph.performDijkstra(Vec2Sphere(32.694865977875075, 161.71875000000003), Vec2Sphere(-28.459033019728057, 80.50781250000001));
-    graph.performDijkstra(Vec2Sphere(-0.3515602939922709, 69.60937500000001), Vec2Sphere(30.29701788337205, -48.33984375));
-    graph.performDijkstra(Vec2Sphere(-62.75472592723178, 177.71484375), Vec2Sphere(-66.86108230224609, -18.457031250000004));
-    graph.performDijkstra(Vec2Sphere(58.35563036280967, -20.917968750000004), Vec2Sphere(49.61070993807422, -24.082031250000004));
+    graph.performDijkstraLogging(Vec2Sphere(-34.016241889667015, -96.50390625000001), Vec2Sphere(-27.68352808378776, -28.652343750000004));
+    graph.performDijkstraLogging(Vec2Sphere(32.694865977875075, 161.71875000000003), Vec2Sphere(-28.459033019728057, 80.50781250000001));
+    graph.performDijkstraLogging(Vec2Sphere(-0.3515602939922709, 69.60937500000001), Vec2Sphere(30.29701788337205, -48.33984375));
+    graph.performDijkstraLogging(Vec2Sphere(-62.75472592723178, 177.71484375), Vec2Sphere(-66.86108230224609, -18.457031250000004));
+    graph.performDijkstraLogging(Vec2Sphere(58.35563036280967, -20.917968750000004), Vec2Sphere(49.61070993807422, -24.082031250000004));
 }
 
 int main() {
@@ -108,6 +109,9 @@ int main() {
     } else {
         generate_graph(graph, 4000000, filename);
     }
+    std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
+    TransitNodesRouting tnr = TransitNodesRouting(graph_ptr, 128);
+    tnr.findEdgeBuckets();
     //graph_tests(graph);
     // std::string graph_json = GeoWriter::buildGraphGeoJson(graph.nodes, graph.sources, graph.targets);
     // GeoWriter::writeToDisk(graph_json, "../files/graph_fin.json");

@@ -140,26 +140,49 @@ std::string GeoWriter::buildGraphGeoJson(std::vector<Vec2Sphere> &nodes, std::ve
     return out;
 }
 
-void GeoWriter::buildPolygonGeoJson(std::vector<SingleCoast> &coastlines, std::string &filename) {
+std::string GeoWriter::buildNodesAsEdges(std::vector<Vec2Sphere> nodes) {
+    std::string out = "{\"type\": \"FeatureCollection\",\n"
+    "\"features\":[ \n";
+    for (int i = 0; i < nodes.size(); i++) {
+        out += "{\"type\": \"Feature\",\n";
+        out += "\"properties\": {},\n";
+        out += "\"geometry\": {\"type\": \"LineString\",\n";
+        out += "\"coordinates\": [\n";
+        out += "[" + std::to_string(nodes[i].lon) + ", " + std::to_string(nodes[i].lat) + "], \n";
+        out += "[" + std::to_string(nodes[i].lon + 0.005) + ", " + std::to_string(nodes[i].lat + 0.005) + "] \n";
+        out += "]}}";
+        if (i < nodes.size() - 1) 
+            out += ",";
+    }
+    out += "]}";
+    return out;
+}
+
+void GeoWriter::buildNodesAsEdges(std::vector<Vec2Sphere> nodes, std::string filename) {
+    std::string content = buildNodesAsEdges(nodes);
+    writeToDisk(content, filename);
+}
+
+void GeoWriter::buildPolygonGeoJson(std::vector<SingleCoast> &coastlines, std::string filename) {
     std::string content = buildPolygonGeoJson(coastlines);
     writeToDisk(content, filename);
 }
 
-void GeoWriter::buildNodesGeoJson(std::vector<Vec2Sphere> &nodes, std::string &filename) {
+void GeoWriter::buildNodesGeoJson(std::vector<Vec2Sphere> &nodes, std::string filename) {
     std::string content = buildNodesGeoJson(nodes);
     writeToDisk(content, filename);
 }
 
-void GeoWriter::buildGraphGeoJson(std::vector<Vec2Sphere> &nodes, std::vector<int> &sources, std::vector<int> &targets, std::string &filename) {
+void GeoWriter::buildGraphGeoJson(std::vector<Vec2Sphere> &nodes, std::vector<int> &sources, std::vector<int> &targets, std::string filename) {
     std::string content = buildGraphGeoJson(nodes, sources, targets);
     writeToDisk(content, filename);
 
 }
-void GeoWriter::buildPathGeoJson(ResultDTO &path, std::string &filename) {
+void GeoWriter::buildPathGeoJson(ResultDTO &path, std::string filename) {
     std::string content = buildPathGeoJson(path);
     writeToDisk(content, filename);
 }
-void GeoWriter::buildLineSegmentsJson(std::vector<Vec2Sphere> lineSegments, std::string &filename) {
+void GeoWriter::buildLineSegmentsJson(std::vector<Vec2Sphere> lineSegments, std::string filename) {
     std::string content = buildLineSegmentsJson(lineSegments);
     writeToDisk(content, filename);
 }
@@ -177,7 +200,7 @@ std::string GeoWriter::generateFMI(std::vector<Vec2Sphere> &nodes, std::vector<i
     return out;
 }
 
-void GeoWriter::writeToDisk(std::string j_string, std::string file_name) {
+void GeoWriter::writeToDisk(std::string j_string, std::string &file_name) {
     std::ofstream json_stream;
     json_stream.open (file_name);
     json_stream << j_string;

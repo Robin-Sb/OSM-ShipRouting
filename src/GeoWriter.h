@@ -12,12 +12,14 @@ class GeoWriter {
         static std::string buildGraphGeoJson(std::vector<Vec2Sphere> &nodes, std::vector<int> &sources, std::vector<int> &targets);
         static std::string buildPathGeoJson(ResultDTO &path);
         static std::string buildLineSegmentsJson(std::vector<Vec2Sphere> lineSegments);
-        static void buildPolygonGeoJson(std::vector<SingleCoast> &coastlines, std::string &filename);
-        static void buildNodesGeoJson(std::vector<Vec2Sphere> &nodes, std::string &filename);
-        static void buildGraphGeoJson(std::vector<Vec2Sphere> &nodes, std::vector<int> &sources, std::vector<int> &targets, std::string &filename);
-        static void buildPathGeoJson(ResultDTO &path, std::string &filename);
-        static void buildLineSegmentsJson(std::vector<Vec2Sphere> lineSegments, std::string &filename);
+        static std::string buildNodesAsEdges(std::vector<Vec2Sphere> nodes);
+        static void buildPolygonGeoJson(std::vector<SingleCoast> &coastlines, std::string filename);
+        static void buildNodesGeoJson(std::vector<Vec2Sphere> &nodes, std::string filename);
+        static void buildGraphGeoJson(std::vector<Vec2Sphere> &nodes, std::vector<int> &sources, std::vector<int> &targets, std::string filename);
+        static void buildPathGeoJson(ResultDTO &path, std::string filename);
+        static void buildLineSegmentsJson(std::vector<Vec2Sphere> lineSegments, std::string filename);
+        static void buildNodesAsEdges(std::vector<Vec2Sphere> nodes, std::string filename);
 
-        static void writeToDisk(std::string j_string, std::string file_name);
+        static void writeToDisk(std::string j_string, std::string &file_name);
         static std::string generateFMI(std::vector<Vec2Sphere> &nodes, std::vector<int> &sources, std::vector<int> &targets, std::vector<int> &costs);
 };

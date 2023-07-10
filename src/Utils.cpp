@@ -30,7 +30,15 @@ Vec2::Vec2(Vec2Sphere sphereBase) {
     float deg_to_rad = pi / 180;
     // define on a unit interval
     float lon = sphereBase.lon * deg_to_rad;
-    x = ((lon - 0) * std::cos(lon) + pi) / (2 * pi);
-    y = ((sphereBase.lat - 0) * deg_to_rad + (pi / 2)) / pi;
+    float lat = sphereBase.lat * deg_to_rad;
+    // mercator
+    //x = ((lon - 0) + pi) / (2 * pi);
+    //y = (std::asinh(std::tan(lat)) + (pi / 2)) / pi;
+    // miller
+    //float max_y = 5.0/4.0 * std::asinh(std::tan((4.0/5.0) * (pi/2)));
+    //y = (5.0/4.0 * std::asinh(std::tan(4.0/5.0 * lat)) + max_y) / (max_y * 2);
+    // plate carree
+    x = ((lon - 0) * std::cos(0) + pi) / (2 * pi);
+    y = ((lat - 0) + (pi / 2)) / pi;
     //y = std::asinh(std::tan(sphereBase.lat * deg_to_rad));
 }

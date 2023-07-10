@@ -112,12 +112,18 @@ int main() {
     std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
     TransitNodesRouting tnr = TransitNodesRouting(graph_ptr, 128);
     tnr.findEdgeBuckets();
+    std::vector<Vec2Sphere> gridNodes = tnr.transformBack();
+    GeoWriter::buildNodesAsEdges(gridNodes, "../files/gridnodes.json");
+    tnr.debug();
+    tnr.findTransitNodes();
+
     //graph_tests(graph);
     // std::string graph_json = GeoWriter::buildGraphGeoJson(graph.nodes, graph.sources, graph.targets);
     // GeoWriter::writeToDisk(graph_json, "../files/graph_fin.json");
-    startServer(graph);
-    // std::string nodes_json = GeoWriter::buildNodesGeoJson(graph.nodes);
-    // GeoWriter::writeToDisk(nodes_json, "../files/nodes_test.json");
+    // std::string graph_file = "../files/graph_test.json";
+    // GeoWriter::buildGraphGeoJson(graph.nodes, graph.sources, graph.targets, graph_file);
+    //startServer(graph);
+    //GeoWriter::writeToDisk(nodes_json, "../files/nodes_test.json");
     // std::string path_json = GeoWriter::buildPathGeoJson(resultPath);
     // GeoWriter::writeToDisk(path_json, "../files/result_path.json");
     return 0;

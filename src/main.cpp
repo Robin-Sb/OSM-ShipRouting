@@ -114,7 +114,7 @@ int main() {
     tnr.findEdgeBuckets();
     std::vector<Vec2Sphere> gridNodes = tnr.transformBack();
     GeoWriter::buildNodesAsEdges(gridNodes, "../files/gridnodes.json");
-    tnr.debug();
+    //tnr.debug();
     tnr.findTransitNodes();
 
     //graph_tests(graph);

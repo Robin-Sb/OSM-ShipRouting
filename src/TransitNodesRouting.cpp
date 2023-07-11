@@ -21,12 +21,14 @@ void TransitNodesRouting::findTransitNodes() {
     std::array<int, 2> cellsLeft{-2, -1};
     std::array<int, 2> cellsRight{2, 3};
 
-    // edgebuckets start at high value 
-    // check why
-    // did not figure out why, but seems correct
+    // [GridIndexX][NodeIndex][vIndex, vDistance]
+    std::vector<std::vector<std::vector<std::pair<int, int>>>> distancesVertical(gridsize); 
+
     for (int sweepIndexX = 0; sweepIndexX < gridsize; sweepIndexX++) {
+        // maps the absolute node index to the node index in the distancesVertical array
+        std::unordered_map<int, int> nodeIdxToMapIdx;
         // [x_index][y_index][] 
-        std::vector<std::vector<std::vector<int>>> distances (gridsize);
+        //std::vector<std::vector<std::vector<int>>> distances (gridsize);
         for (int sweepIndexY = 0; sweepIndexY < gridsize; sweepIndexY++) {
             std::vector<int> potentialTransitNodes;
             for (int edgeIndex = 0; edgeIndex < edgeBucketsVertical[sweepIndexX][sweepIndexY].size(); edgeIndex++) {
@@ -39,7 +41,8 @@ void TransitNodesRouting::findTransitNodes() {
                 int gridCellY = std::floor(v.y * gridsize);
                 
                 std::vector<std::pair<bool, std::pair<int,int>>> boundaryNodes (graph->nodes.size(), std::make_pair(false, std::make_pair(-1,-1)));
-                std::vector<std::vector<int>> cLeft (5);
+                std::array<std::vector<int>, 5> cLeft;
+                std::array<std::vector<int>, 5> indicesOfCLeft;
 
                 // boundary condition incase we are the edge of the grid 
                 int minY = std::max(0, 2 - gridCellY) - 2;
@@ -63,18 +66,36 @@ void TransitNodesRouting::findTransitNodes() {
                             // I am not sure what the correct thing to do is here
                             boundaryNodes[startIndex] = std::make_pair(true, std::make_pair(localIdx, cLeft[localIdx].size()));
                             cLeft[localIdx].push_back(0); //graph->sources[edgeBucketsVertical[xIndex][yIndex][j]]);
+                            indicesOfCLeft[localIdx].push_back(startIndex);
                             n_boundaryNodes++;
                         }
                     }
                 }
                 dijkstra(vIndex, boundaryNodes, cLeft, n_boundaryNodes);
+                for (int i = 0; i < indicesOfCLeft.size(); i++) {
+                    for (int j = 0; j < indicesOfCLeft[i].size(); j++) {
+                        int nodeIndex = indicesOfCLeft[i][j];
+                        int mapIndex;
+                        if (nodeIdxToMapIdx.find(nodeIndex) == nodeIdxToMapIdx.end()) {
+                            mapIndex = distancesVertical[gridCellX].size();
+                            std::vector<std::pair<int,int>> newNodeEntry;
+                            newNodeEntry.push_back(std::make_pair(vIndex, cLeft[i][j]));
+                            // actually gridCellX here is wrong, we need to use the gridcell index of the cLeft node (so gridcell -2 or so)
+                            distancesVertical[gridCellX].push_back(newNodeEntry);
+                        }
+                        else {
+                            mapIndex = nodeIdxToMapIdx.find(nodeIndex)->second;
+                            distancesVertical[gridCellX][mapIndex].push_back(std::make_pair(vIndex, cLeft[i][j]));
+                        }
+                    }
+                }
             }
         }
     }
 }
 
 // TODO: Finish
-void TransitNodesRouting::dijkstra(int startIndex, std::vector<std::pair<bool, std::pair<int,int>>> boundaryNodes, std::vector<std::vector<int>> cLeft, int n_boundaryNodes) {
+void TransitNodesRouting::dijkstra(int startIndex, std::vector<std::pair<bool, std::pair<int,int>>> &boundaryNodes, std::array<std::vector<int>, 5> &cLeft, int n_boundaryNodes) {
     std::vector<int> prev;
     std::vector<int> dist;
     std::priority_queue<std::pair<int, int>, std::vector<std::pair<int, int>>, std::greater<std::pair<int, int>>> pq;

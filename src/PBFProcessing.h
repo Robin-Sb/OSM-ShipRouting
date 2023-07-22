@@ -23,12 +23,5 @@ class CoastlineStitcher {
         std::unordered_map<int, int> processedCoastlines;
         std::vector<bool> isCLActive;
         std::vector<SingleCoast> stitchCoastlines();
-        std::vector<SingleCoast> stitchCL2();
     private:
-        void processSingleCoastline(int i);
-        void handleCaseUnseen(int i);
-        int handleCaseStartMatchesEnd(int i);
-        void handleCaseFinishedCoastline(int i, int coastIndexStart, int coastIndexEnd);
-        void handleCaseSandwich(int i, int coastIndexStart, int coastIndexEnd);
-        void handleCaseOnlyEndMatchesStart(int i, int coastIndex);
 };

@@ -8,7 +8,8 @@
 #include "GraphUtils.h"
 #include "GraphGenerator.h"
 #include <chrono>
-#include <ctime>    
+#include <ctime>
+#include <unordered_map>
 
 
 struct ResultDTO {
@@ -27,6 +28,7 @@ class Graph {
         std::vector<Vec2Sphere> nodes;
         ResultDTO performDijkstraMultiple(int start, std::set<int> endNodes);
         ResultDTO performDijkstraLogging(Vec2Sphere startPos, Vec2Sphere endPos);
+        void trim(int minLat, int maxLat, int minLon, int maxLon);
         void generate(int n, std::vector<SingleCoast> &coastlines);
         void buildFromFMI(std::string fmiFile);
         void readNodes(std::ifstream &file, int n);

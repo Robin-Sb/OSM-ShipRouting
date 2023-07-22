@@ -97,3 +97,10 @@ class CellSearch {
         SearchResult updateResult(SearchResult searchResult, SearchDirection searchDir, Vec2Sphere ref, Vec2Sphere comp, int value);
         Vec2Sphere getBoundaryCoords(int idxLat, int idxLon, int dirLat, int dirLon);
 };
+
+class GraphBuilder {
+    public:
+        static void buildGraphFromFMI(std::string filename);
+        static void readNodes();
+        static void readEdges();
+};

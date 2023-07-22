@@ -103,19 +103,31 @@ void graph_tests(Graph &graph) {
 
 int main() {
     Graph graph = Graph();
-    std::string filename = "../files/graph_4m.fmi";
+    std::string filename = "../files/graph_small_test2.fmi";
     if (checkIfFileExists(filename)) {
         graph.buildFromFMI(filename);
     } else {
         generate_graph(graph, 4000000, filename);
     }
+
+    // graph.trim(30, 35, -55, -45);
+    // GeoWriter::generateFMI(graph.nodes, graph.sources, graph.targets, graph.costs, "../files/graph_small_test2.fmi");
+    // GeoWriter::buildGraphGeoJson(graph.nodes, graph.sources, graph.targets, "../files/tnr_demo2.json");
+
     std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
-    TransitNodesRouting tnr = TransitNodesRouting(graph_ptr, 128);
+    TransitNodesRouting tnr = TransitNodesRouting(graph_ptr, 256);
     tnr.findEdgeBuckets();
-    std::vector<Vec2Sphere> gridNodes = tnr.transformBack();
-    GeoWriter::buildNodesAsEdges(gridNodes, "../files/gridnodes.json");
+    // std::vector<Vec2Sphere> gridNodes = tnr.transformBack();
+    // GeoWriter::buildNodesAsEdges(gridNodes, "../files/gridnodes.json");
     //tnr.debug();
     tnr.findTransitNodes();
+    std::vector<Vec2Sphere> tnNodes; 
+    for (int i = 0; i < tnr.transitNodes.size(); i++) {
+        tnNodes.push_back(graph.nodes[tnr.transitNodes[i]]);
+    }
+    GeoWriter::buildNodesGeoJson(tnNodes, "../files/transit_nodes_small.json");
+
+
 
     //graph_tests(graph);
     // std::string graph_json = GeoWriter::buildGraphGeoJson(graph.nodes, graph.sources, graph.targets);

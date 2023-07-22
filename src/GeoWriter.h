@@ -22,4 +22,9 @@ class GeoWriter {
 
         static void writeToDisk(std::string j_string, std::string &file_name);
         static std::string generateFMI(std::vector<Vec2Sphere> &nodes, std::vector<int> &sources, std::vector<int> &targets, std::vector<int> &costs);
+        static void generateFMI(std::vector<Vec2Sphere> &nodes, std::vector<int> &sources, std::vector<int> &targets, std::vector<int> &costs, std::string filename);
+
+        static void buildGraphFromFMI(std::string filename);
+        static void readNodes(std::ifstream &file, int n, std::vector<int> &offsets, std::vector<Vec2Sphere> &nodes);
+        static void readEdges(std::ifstream &file, int m, std::vector<int> &sources, std::vector<int> targets, std::vector<int> &costs, std::vector<int> &offsets);
 };

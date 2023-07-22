@@ -98,15 +98,15 @@ std::string GeoWriter::buildGraphGeoJson(std::vector<Vec2Sphere> &nodes, std::ve
     for (int i = startIndex; i < endIndex; i++) {
         float tLonSrc = nodes[sources[i]].lon;
         float tLonTrg = nodes[targets[i]].lon;
-        if (nodes[sources[i]].lon < -175 && nodes[targets[i]].lon > 175) 
-            tLonSrc = 180 + (180 + nodes[sources[i]].lon);
-        if (nodes[sources[i]].lon > 175 && nodes[targets[i]].lon < -175)
-            tLonTrg = 180 + (180 + nodes[targets[i]].lon);
+        // if (nodes[sources[i]].lon < -175 && nodes[targets[i]].lon > 175) 
+        //     tLonSrc = 180 + (180 + nodes[sources[i]].lon);
+        // if (nodes[sources[i]].lon > 175 && nodes[targets[i]].lon < -175)
+        //     tLonTrg = 180 + (180 + nodes[targets[i]].lon);
 
-        if (nodes[sources[i]].lat < 50 || nodes[sources[i]].lat > 60)
-            continue;
-        if (tLonSrc < -15 || tLonSrc > 3) 
-            continue; 
+        // if (nodes[sources[i]].lat < 50 || nodes[sources[i]].lat > 60)
+        //     continue;
+        // if (tLonSrc < -15 || tLonSrc > 3) 
+        //     continue; 
         out += "{";
         out += "    \"type\": \"Feature\",\n"
         "    \"geometry\": {\n"
@@ -200,9 +200,77 @@ std::string GeoWriter::generateFMI(std::vector<Vec2Sphere> &nodes, std::vector<i
     return out;
 }
 
+void GeoWriter::generateFMI(std::vector<Vec2Sphere> &nodes, std::vector<int> &sources, std::vector<int> &targets, std::vector<int> &costs, std::string filename) {
+    std::string result = generateFMI(nodes, sources, targets, costs);
+    writeToDisk(result, filename);
+}
+
 void GeoWriter::writeToDisk(std::string j_string, std::string &file_name) {
     std::ofstream json_stream;
     json_stream.open (file_name);
     json_stream << j_string;
     json_stream.close();
+}
+
+// kind of discontinued -> maybe refactor later
+void GeoWriter::buildGraphFromFMI(std::string filename) {
+    std::vector<int> sources;
+    std::vector<int> targets;
+    std::vector<int> costs;
+    std::vector<int> offsets;
+    std::vector<Vec2Sphere> nodes;
+
+    std::ifstream file(filename);
+    if (file.is_open()) {
+        std::string n_nodes;
+        std::getline(file, n_nodes);
+        std::string n_edges;
+        std::getline(file, n_edges);
+        readNodes(file, std::stoi(n_nodes.c_str()), offsets, nodes);
+        readEdges(file, std::stoi(n_edges.c_str()), sources, targets, costs, offsets);
+        for (int i = 1; i < offsets.size(); i++) 
+            offsets[i] += offsets[i - 1];
+        // those two will be called in graph function
+        // std::shared_ptr<std::vector<Vec2Sphere>> nodes_ptr = std::make_shared<std::vector<Vec2Sphere>>(nodes);
+        // sGrid = std::make_unique<SphericalGrid>(nodes_ptr);
+    }
+}
+
+void GeoWriter::readNodes(std::ifstream &file, int n, std::vector<int> &offsets, std::vector<Vec2Sphere> &nodes) {
+    offsets.push_back(0);
+    for (int i = 0; i < n; i++) {
+        std::string node_text;
+        std::getline(file, node_text);
+        node_text = node_text.c_str();
+        int pos_idx = node_text.find(" ", 0);
+        int idx = std::stoi(node_text.substr(0, pos_idx));
+        int pos_lat = node_text.find(" ", pos_idx + 1);
+        std::string s_lat = node_text.substr(pos_idx, pos_lat - pos_idx);
+        float lat = std::stof(s_lat);
+        int pos_lon = node_text.find(" ", pos_lat + 1);
+        std::string s_lon = node_text.substr(pos_lat, pos_lon - pos_lat);
+        float lon = std::stof(s_lon);
+        Vec2Sphere node = Vec2Sphere(lat, lon);
+        nodes.push_back(node);
+        // prefill offset array
+        offsets.push_back(0);
+    }
+}
+
+void GeoWriter::readEdges(std::ifstream &file, int m, std::vector<int> &sources, std::vector<int> targets, std::vector<int> &costs, std::vector<int> &offsets) {
+    for (int i = 0; i < m; i++) {
+        std::string edge_text;
+        std::getline(file, edge_text);
+        edge_text = edge_text.c_str();
+        int pos_src = edge_text.find(" ", 0);
+        int pos_target = edge_text.find(" ", pos_src + 1);
+        int pos_dist = edge_text.find(" ", pos_target + 1);
+        int source = std::stoi(edge_text.substr(0, pos_src));
+        int target = std::stoi(edge_text.substr(pos_src, pos_target - pos_src));
+        int dist = std::stoi(edge_text.substr(pos_target, pos_dist - pos_target));
+        sources.push_back(source);
+        targets.push_back(target);
+        costs.push_back(dist);
+        offsets[source + 1] += 1;
+    }
 }

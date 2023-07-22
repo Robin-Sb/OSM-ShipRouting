@@ -16,6 +16,47 @@ void Graph::buildFromFMI(std::string fmiFile) {
     }
 }
 
+void Graph::trim(int minLat, int maxLat, int minLon, int maxLon) {
+    std::unordered_map<int, int> remainingEdges;
+    // the remaining nodes after filtering all nodes not in range
+    std::vector<Vec2Sphere> trimmedNodes;
+    for (int i = 0; i < nodes.size(); i++) {
+        // in theory we need to catch the antimeridian case
+        // in practice this is a hacky test function and we will just not use values around the antimerdian
+        if (nodes[i].lat < minLat || nodes[i].lat > maxLat || nodes[i].lon < minLon || nodes[i].lon > maxLon) 
+            // guard clause -> just don't add nodes out of range
+            continue;
+
+        // remember old id to new id (for matching later)
+        remainingEdges.insert(std::make_pair(i, trimmedNodes.size()));
+        // add remaining node to node set
+        trimmedNodes.push_back(nodes[i]);
+    }
+
+    std::vector<int> newSources;
+    std::vector<int> newTargets;
+    std::vector<int> newCosts;
+    std::vector<int> newOffsets {0};
+
+    for (int i = 0; i < sources.size(); i++) {
+        if (remainingEdges.find(sources[i]) != remainingEdges.end() && remainingEdges.find(targets[i]) != remainingEdges.end()) {
+            int newStartIdx = remainingEdges.find(sources[i])->second;
+            int newEndIdx = remainingEdges.find(targets[i])->second;
+            newSources.push_back(newStartIdx);
+            newTargets.push_back(newEndIdx);
+            // costs remain
+            newCosts.push_back(costs[i]);
+            newOffsets.push_back(sources.size());
+        }
+    }
+
+    nodes = trimmedNodes;
+    sources = newSources;
+    targets = newTargets;
+    costs = newCosts;
+    offsets = newOffsets;
+}
+
 // TODO: In many cases, we have to run a dijkstra from the same start node
 // This means, the computation can be sped up in various ways:
 // - only retrieve the startIndex once
@@ -122,6 +163,8 @@ void Graph::readEdges(std::ifstream &file, int m) {
     }
 }
 
+// maybe ḿove this to somewhere else and make it return the values?
+// does not really belong to graph and would make it easier to extend
 void Graph::readNodes(std::ifstream &file, int n) {
     offsets.push_back(0);
     for (int i = 0; i < n; i++) {

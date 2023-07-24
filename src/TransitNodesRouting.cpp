@@ -79,9 +79,7 @@ void TransitNodesRouting::findTransitNodes() {
     std::array<int, 2> cellsLeft{-2, -1};
     std::array<int, 2> cellsRight{2, 3};
 
-
     // the nodeindices have 1:1 correspondence to mapindex anyway, why do we need to store both
-    
     // [GridIndexX][GridIndexY][NodeIndex(In Array)]{NodeIndex (global), {vIndex, vDistance}}
     std::vector<std::vector<std::pair<int, std::unordered_map<int, int>>>> distancesVertical(gridsize);
     // std::vector<std::vector<std::vector<std::pair<int, int>>>> distancesVertical(gridsize); 

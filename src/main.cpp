@@ -127,8 +127,6 @@ int main() {
     }
     GeoWriter::buildNodesGeoJson(tnNodes, "../files/transit_nodes_small.json");
 
-
-
     //graph_tests(graph);
     // std::string graph_json = GeoWriter::buildGraphGeoJson(graph.nodes, graph.sources, graph.targets);
     // GeoWriter::writeToDisk(graph_json, "../files/graph_fin.json");

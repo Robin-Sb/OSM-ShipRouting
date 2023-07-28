@@ -26,11 +26,11 @@ Vec2::Vec2(float _x, float _y) {
 }
 
 Vec2::Vec2(Vec2Sphere sphereBase) {
-    float pi = 3.14159265359;
-    float deg_to_rad = pi / 180;
-    // define on a unit interval
-    float lon = sphereBase.lon * deg_to_rad;
-    float lat = sphereBase.lat * deg_to_rad;
+    // float pi = 3.14159265359;
+    // float deg_to_rad = pi / 180;
+    // // define on a unit interval
+    // float lon = sphereBase.lon * deg_to_rad;
+    // float lat = sphereBase.lat * deg_to_rad;
     // mercator
     //x = ((lon - 0) + pi) / (2 * pi);
     //y = (std::asinh(std::tan(lat)) + (pi / 2)) / pi;
@@ -38,7 +38,22 @@ Vec2::Vec2(Vec2Sphere sphereBase) {
     //float max_y = 5.0/4.0 * std::asinh(std::tan((4.0/5.0) * (pi/2)));
     //y = (5.0/4.0 * std::asinh(std::tan(4.0/5.0 * lat)) + max_y) / (max_y * 2);
     // plate carree
-    x = ((lon - 0) * std::cos(0) + pi) / (2 * pi);
-    y = ((lat - 0) + (pi / 2)) / pi;
+    x = projectX(sphereBase.lon);
+    y = projectY(sphereBase.lat);
+    //y = ((lat - 0) + (pi / 2)) / pi;
     //y = std::asinh(std::tan(sphereBase.lat * deg_to_rad));
+}
+
+float Vec2::degToRad(float angleDeg) {
+    return angleDeg * (pi / 180.0);
+}
+
+float Vec2::projectX(float lon) {
+    lon = Vec2::degToRad(lon);
+    return ((lon - 0) * std::cos(0) + pi) / (2 * pi);
+} 
+
+float Vec2::projectY(float lat) {
+    lat = Vec2::degToRad(lat);
+    return ((lat - 0) + (pi / 2)) / pi;
 }

@@ -16,6 +16,19 @@ void TransitNodesRouting::debug() {
     }
 }
 
+
+void TransitNodesRouting::findBoundaryNodesHorizontal(int xIndex, int yIndex, int localIndex, std::array<std::vector<int>, 5> &cArray, std::array<std::vector<int>, 5> &indicesOfCArray, std::vector<std::pair<bool, std::tuple<int,int, RelativePosition>>> &boundaryNodes, int &n_boundaryNodes, RelativePosition relPos) {
+    for (int i = 0; i <= 1; i++) {
+        int yIndexN = yIndex + i;
+        for (int j = 0; j < edgeBucketsHorizontal[xIndex][yIndexN].size(); j++) {
+            // check if start or end index is in cell
+            // int gridCellX = graph->sources[edgeBucketsHorizontal[xIndex][yIndexN]]
+        }
+    }    
+}
+
+
+
 void TransitNodesRouting::findBoundaryNodes(int xIndex, int yIndex, int localIndex, std::array<std::vector<int>, 5> &cArray, std::array<std::vector<int>, 5> &indicesOfCArray, std::vector<std::pair<bool, std::tuple<int,int, RelativePosition>>> &boundaryNodes, int &n_boundaryNodes, RelativePosition relPos) {
     findBoundaryNodesDirectional(xIndex, yIndex, localIndex, cArray, indicesOfCArray, boundaryNodes, n_boundaryNodes, edgeBucketsVertical, relPos);
     findBoundaryNodesDirectional(xIndex, yIndex, localIndex, cArray, indicesOfCArray, boundaryNodes, n_boundaryNodes, edgeBucketsHorizontal, relPos);
@@ -121,7 +134,7 @@ void TransitNodesRouting::findTransitNodes() {
                         // special case caught due to minY and maxY
                         int yIndex = gridCellY + i;
                         // wraparound incase x becomes negative
-                        int xIndexL = ((sweepIndexX + (cell - 3)) + gridsize) % gridsize;
+                        int xIndexL = (sweepIndexX + cell - 3 + gridsize) % gridsize;
                         int xIndexR = (sweepIndexX + cell + 2) % gridsize; 
                         findBoundaryNodes(xIndexL, yIndex, localIdx, cLeft, indicesOfCLeft, boundaryNodes, n_boundaryNodes, RelativePosition::LEFTLOWER);
                         findBoundaryNodes(xIndexR, yIndex, localIdx, cRight, indicesOfCRight, boundaryNodes, n_boundaryNodes, RelativePosition::RIGHTUPPER);
@@ -145,8 +158,9 @@ void TransitNodesRouting::findTransitNodes() {
         int minYIndex = 0;
         int xComp = (i + 4) % gridsize;
         for (int j = 0; j < distancesVertical[i].size(); j++) {
-            // TODO: make separate project y and x functions in utils and call them here
-            int yGridCell = std::floor(Vec2(graph->nodes[distancesVertical[i][j].first]).y * gridsize);
+            //Vec2 v = Vec2(graph->nodes[distancesVertical[i][j].first]);
+            float v_y = Vec2::projectY(graph->nodes[distancesVertical[i][j].first].lat);
+            int yGridCell = std::floor(v_y * gridsize);
             int maxCell = yGridCell - 2;
             for (int k = minYIndex; k < distancesVertical[xComp].size(); k++) { 
                 int yGridCellRef = std::floor(Vec2(graph->nodes[distancesVertical[xComp][k].first]).y * gridsize);

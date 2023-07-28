@@ -5,6 +5,9 @@
 #include <algorithm>
 #include <numeric>
 
+
+const float pi = 3.14159265359;
+
 template <typename T, typename Compare>
 std::vector<std::size_t> sort_permutation(
     const std::vector<T>& vec,
@@ -73,4 +76,8 @@ class Vec2 {
 
         float x;
         float y;
+        static float projectX(float lon);
+        static float projectY(float lat);
+    private:
+        static float degToRad(float angleDeg);
 };

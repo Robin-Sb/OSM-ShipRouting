@@ -120,7 +120,7 @@ int main() {
     // std::vector<Vec2Sphere> gridNodes = tnr.transformBack();
     // GeoWriter::buildNodesAsEdges(gridNodes, "../files/gridnodes.json");
     //tnr.debug();
-    tnr.findTransitNodes();
+    tnr.sweepLineTransitNodes();
     std::vector<Vec2Sphere> tnNodes; 
     for (int i = 0; i < tnr.transitNodes.size(); i++) {
         tnNodes.push_back(graph.nodes[tnr.transitNodes[i]]);

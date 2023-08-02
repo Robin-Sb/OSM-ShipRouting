@@ -39,51 +39,124 @@ void TransitNodesRouting::findBoundaryNodesDirectional(int xIndex, int yIndex, s
     }
 }
 
-void TransitNodesRouting::storeDistances(int cellIndex, int vIndex, std::vector<int> &cArray, std::vector<int> &indicesOfCArray, std::vector<std::vector<std::pair<int, std::unordered_map<int, int>>>> &distancesVertical, std::array<std::unordered_map<int, int>, 2> &nodeIdxToMapIdx, int lrIndex) {
+void TransitNodesRouting::storeDistances(int cellIndex, int vIndex, std::vector<int> &cArray, std::vector<int> &indicesOfCArray, std::vector<std::vector<std::pair<int, std::unordered_map<int, int>>>> &distances, std::array<std::unordered_map<int, int>, 2> &nodeIdxToMapIdx, int lrIndex) {
     for (int j = 0; j < indicesOfCArray.size(); j++) {
         int nodeIndex = indicesOfCArray[j];
         int mapIndex;
         if (nodeIdxToMapIdx[lrIndex].find(nodeIndex) == nodeIdxToMapIdx[lrIndex].end()) {
-            mapIndex = distancesVertical[cellIndex].size();
+            mapIndex = distances[cellIndex].size();
             nodeIdxToMapIdx[lrIndex][nodeIndex] = mapIndex;
             std::unordered_map<int, int> distanceData;
             distanceData[vIndex] = cArray[j];
             std::pair<int, std::unordered_map<int, int>> newNodeEntry = std::make_pair(nodeIndex, distanceData);
-            distancesVertical[cellIndex].push_back(newNodeEntry);
+            distances[cellIndex].push_back(newNodeEntry);
         }
         else {
             mapIndex = nodeIdxToMapIdx[lrIndex].find(nodeIndex)->second;
-            distancesVertical[cellIndex][mapIndex].second.insert(std::make_pair(vIndex, cArray[j]));
+            distances[cellIndex][mapIndex].second.insert(std::make_pair(vIndex, cArray[j]));
         }
     }
 }
 
-bool TransitNodesRouting::compareYCoordinate(std::pair<int, std::unordered_map<int, int>> &value1, std::pair<int, std::unordered_map<int, int>> &value2) {
+bool TransitNodesRouting::compareCoordinates(std::pair<int, std::unordered_map<int, int>> &value1, std::pair<int, std::unordered_map<int, int>> &value2, bool sortByY) {
     Vec2Sphere pos1 = graph->nodes[value1.first];
     Vec2Sphere pos2 = graph->nodes[value2.first];
-    return pos1.lat > pos2.lat;
+    if (sortByY)
+        return pos1.lat > pos2.lat;
+    else
+        return pos1.lon > pos2.lon;
+}
+
+
+void TransitNodesRouting::processSingleNode(int sweepIndexX, int sweepIndexY, int edgeIndex, std::vector<std::vector<std::pair<int, std::unordered_map<int, int>>>>& distancesVertical, std::array<std::unordered_map<int, int>, 2>& nodeIdxToMapIdx) {
+    // just always use the source idk know actually 
+    int vIndex = graph->sources[edgeBucketsVertical[sweepIndexX][sweepIndexY][edgeIndex]];
+    
+    // TODO: update this comment
+    // [NodeIndex](one entry for every node){whether node is at boundary, {first dim in cArray (index of node), whether lower or upper}}
+    std::vector<std::pair<bool, std::pair<int, RelativePosition>>> boundaryNodes (graph->nodes.size(), std::make_pair(false, std::make_pair(-1, RelativePosition::UNDEF)));
+
+    // cLeft and cRight are flat arrays with all distances to the nodes at the cell boundaries 
+    std::vector<int> cLeft;
+    std::vector<int> cRight;
+
+    // indicesOfCLeft and indicesOfCRight are arrays which map the indices in cLeft and cRight back to their node id
+    std::vector<int> indicesOfCLeft;
+    std::vector<int> indicesOfCRight;
+
+    // boundary condition incase we are the edge of the grid 
+    int minY = std::max(0, 2 - sweepIndexY) - 2;
+    int maxY = std::min((gridsize - 1) - sweepIndexY, 2);
+    
+    int n_boundaryNodes = 0;
+    // this only processes the vertical nodes so far -> expand to horizontal
+    for (int i = minY; i <= maxY; i++) {
+        int localIdx = 4 - (i + 2);
+        for (int cell = 0; cell < 2; cell++) {
+            // special case caught due to minY and maxY
+            int yIndex = sweepIndexY + i;
+            // wraparound incase x becomes negative
+            int xIndexL = (sweepIndexX + cell - 3 + gridsize) % gridsize;
+            int xIndexR = (sweepIndexX + cell + 2) % gridsize; 
+            findBoundaryNodesDirectional(xIndexL, yIndex, cLeft, indicesOfCLeft, boundaryNodes, n_boundaryNodes, edgeBucketsVertical, RelativePosition::LEFTLOWER);
+            findBoundaryNodesDirectional(xIndexR, yIndex, cRight, indicesOfCRight, boundaryNodes, n_boundaryNodes, edgeBucketsVertical, RelativePosition::RIGHTUPPER);
+        }
+    }
+
+    // horizontally, we need to look at 6 (six) cell boundaries
+    for (int i = minY; i <= std::min(maxY + 1, (gridsize - 1) - sweepIndexY); i++) { 
+        int yIndex = sweepIndexY + i;
+
+        int xIndexL = (sweepIndexX - 3 + gridsize) % gridsize;
+        int xIndexR = (sweepIndexX + 2) % gridsize;
+        findBoundaryNodesDirectional(xIndexL, yIndex, cLeft, indicesOfCLeft, boundaryNodes, n_boundaryNodes, edgeBucketsHorizontal, RelativePosition::LEFTLOWER);
+        findBoundaryNodesDirectional(xIndexR, yIndex, cRight, indicesOfCRight, boundaryNodes, n_boundaryNodes, edgeBucketsHorizontal, RelativePosition::RIGHTUPPER);
+    }
+    dijkstra(vIndex, boundaryNodes, cLeft, cRight, n_boundaryNodes);
+    int leftCellIndex = (sweepIndexX - 2 + gridsize) % gridsize;
+    storeDistances(leftCellIndex, vIndex, cLeft, indicesOfCLeft, distancesVertical, nodeIdxToMapIdx, 0);
+    int rightCellIndex = (sweepIndexX + 2) % gridsize;
+    storeDistances(rightCellIndex, vIndex, cRight, indicesOfCRight, distancesVertical, nodeIdxToMapIdx, 1);
+}
+
+void TransitNodesRouting::sortDescending(std::vector<std::vector<std::pair<int, std::unordered_map<int, int>>>> &distances, bool sortByY) {
+    for (int i = 0; i < distances.size(); i++) {
+        std::sort(distances[i].begin(), distances[i].end(), 
+        [this, sortByY](std::pair<int, std::unordered_map<int, int>> &value1, std::pair<int, std::unordered_map<int, int>> &value2) {
+            return compareCoordinates(value1, value2, sortByY); 
+        });
+    }
 }
 
 // TODO: wraparound antimeridian and pole case
-void TransitNodesRouting::findTransitNodes() {
-
+// TODO: maybe the whole transit nodes search can be refactored into a new class
+void TransitNodesRouting::sweepLineTransitNodes() {
     // the nodeindices have 1:1 correspondence to mapindex anyway, why do we need to store both
     // [GridIndexX][GridIndexY][NodeIndex(In Array)]{NodeIndex (global), {vIndex, vDistance}}
     std::vector<std::vector<std::pair<int, std::unordered_map<int, int>>>> distancesVertical(gridsize);
+    std::vector<std::vector<std::pair<int, std::unordered_map<int, int>>>> distancesHorizontal(gridsize);
 
     // first part, find distances from boundary nodes to all potential nodes
     for (int sweepIndexX = 0; sweepIndexX < gridsize; sweepIndexX++) {
-        // maps the absolute node index to the node index in the distancesVertical array
-        // sadly we need two maps since edges can span over multiple cells (near the poles)
-        std::array<std::unordered_map<int, int>, 2> nodeIdxToMapIdx;
+        // maps the absolute node index to the node index in the distances array
+        // we need two maps since edges can span over multiple cells (near the poles)
         for (int sweepIndexY = 0; sweepIndexY < gridsize; sweepIndexY++) {
-            //std::vector<int> potentialTransitNodes;
-            for (int edgeIndex = 0; edgeIndex < edgeBucketsVertical[sweepIndexX][sweepIndexY].size(); edgeIndex++) {
+            std::array<std::unordered_map<int, int>, 2> nodeIdxToMapIdx;
+            // process nodes which cross a vertical grid line
+            // for (int edgeIndex = 0; edgeIndex < edgeBucketsVertical[sweepIndexX][sweepIndexY].size(); edgeIndex++) {
+            //     processSingleNode(sweepIndexX, sweepIndexY, edgeIndex, distancesVertical, nodeIdxToMapIdx);
+            // }
+
+            // process nodes which cross a horizontal grid line
+            for (int edgeIndex = 0; edgeIndex < edgeBucketsHorizontal[sweepIndexX][sweepIndexY].size(); edgeIndex++) {
+                // skip at the edge of the globe 
+                if (sweepIndexY < 2 || sweepIndexY > gridsize - 2)
+                    break;
                 // just always use the source idk know actually 
-                int vIndex = graph->sources[edgeBucketsVertical[sweepIndexX][sweepIndexY][edgeIndex]];
+                int vIndex = graph->sources[edgeBucketsHorizontal[sweepIndexX][sweepIndexY][edgeIndex]];
                 
                 // TODO: update this comment
-                // [NodeIndex](one entry for every node){whether node is at boundary, {first dim in cArray (local index of cell), second dim in cArray (index of node), whether lower or upper}}
+                // [NodeIndex](one entry for every node){whether node is at boundary, {first dim in cArray (index of node), whether lower or upper}}
                 std::vector<std::pair<bool, std::pair<int, RelativePosition>>> boundaryNodes (graph->nodes.size(), std::make_pair(false, std::make_pair(-1, RelativePosition::UNDEF)));
 
                 // cLeft and cRight are flat arrays with all distances to the nodes at the cell boundaries 
@@ -100,64 +173,79 @@ void TransitNodesRouting::findTransitNodes() {
                 
                 int n_boundaryNodes = 0;
                 // this only processes the vertical nodes so far -> expand to horizontal
-                for (int i = minY; i <= maxY; i++) {
+                for (int i = -2; i <= 2; i++) {
                     int localIdx = 4 - (i + 2);
                     for (int cell = 0; cell < 2; cell++) {
                         // special case caught due to minY and maxY
-                        int yIndex = sweepIndexY + i;
+                        int yIndexU = sweepIndexY + cell + 2;
+                        int yIndexD = sweepIndexY + cell - 3;
                         // wraparound incase x becomes negative
-                        int xIndexL = (sweepIndexX + cell - 3 + gridsize) % gridsize;
-                        int xIndexR = (sweepIndexX + cell + 2) % gridsize; 
-                        findBoundaryNodesDirectional(xIndexL, yIndex, cLeft, indicesOfCLeft, boundaryNodes, n_boundaryNodes, edgeBucketsVertical, RelativePosition::LEFTLOWER);
-                        findBoundaryNodesDirectional(xIndexR, yIndex, cRight, indicesOfCRight, boundaryNodes, n_boundaryNodes, edgeBucketsVertical, RelativePosition::RIGHTUPPER);
+                        int xIndex = (sweepIndexX + i + gridsize) % gridsize;
+                        
+                        findBoundaryNodesDirectional(xIndex, yIndexD, cLeft, indicesOfCLeft, boundaryNodes, n_boundaryNodes, edgeBucketsHorizontal, RelativePosition::LEFTLOWER);
+                        findBoundaryNodesDirectional(xIndex, yIndexU, cRight, indicesOfCRight, boundaryNodes, n_boundaryNodes, edgeBucketsHorizontal, RelativePosition::RIGHTUPPER);
                     }
                 }
 
                 // horizontally, we need to look at 6 (six) cell boundaries
-                for (int i = minY; i <= std::min(maxY + 1, (gridsize - 1) - sweepIndexY); i++) { 
-                    int yIndex = sweepIndexY + i;
+                for (int i = -2; i <= 3; i++) { 
+                    int yIndexU = sweepIndexY + 3;
+                    int yIndexD = sweepIndexY - 2;
 
-                    int xIndexL = (sweepIndexX - 3 + gridsize) % gridsize;
-                    int xIndexR = (sweepIndexX + 2) % gridsize;
-                    findBoundaryNodesDirectional(xIndexL, yIndex, cLeft, indicesOfCLeft, boundaryNodes, n_boundaryNodes, edgeBucketsHorizontal, RelativePosition::LEFTLOWER);
-                    findBoundaryNodesDirectional(xIndexR, yIndex, cRight, indicesOfCRight, boundaryNodes, n_boundaryNodes, edgeBucketsHorizontal, RelativePosition::RIGHTUPPER);
+                    int xIndex = (sweepIndexX + i + gridsize) % gridsize;
+                    findBoundaryNodesDirectional(xIndex, yIndexD, cLeft, indicesOfCLeft, boundaryNodes, n_boundaryNodes, edgeBucketsVertical, RelativePosition::LEFTLOWER);
+                    findBoundaryNodesDirectional(xIndex, yIndexU, cRight, indicesOfCRight, boundaryNodes, n_boundaryNodes, edgeBucketsVertical, RelativePosition::RIGHTUPPER);
                 }
                 dijkstra(vIndex, boundaryNodes, cLeft, cRight, n_boundaryNodes);
-                int leftCellIndex = (sweepIndexX - 2 + gridsize) % gridsize;
-                storeDistances(leftCellIndex, vIndex, cLeft, indicesOfCLeft, distancesVertical, nodeIdxToMapIdx, 0);
-                int rightCellIndex = (sweepIndexX + 2) % gridsize;
-                storeDistances(rightCellIndex, vIndex, cRight, indicesOfCRight, distancesVertical, nodeIdxToMapIdx, 1);
+                int bottomCellIndex = (sweepIndexY - 2 + gridsize) % gridsize;
+                storeDistances(bottomCellIndex, vIndex, cLeft, indicesOfCLeft, distancesHorizontal, nodeIdxToMapIdx, 0);
+                int topCellIndex = (sweepIndexY + 2) % gridsize;
+                storeDistances(topCellIndex, vIndex, cRight, indicesOfCRight, distancesHorizontal, nodeIdxToMapIdx, 1);
             }
         }
     }
-    for (int i = 0; i < distancesVertical.size(); i++) {
-        std::sort(distancesVertical[i].begin(), distancesVertical[i].end(), [this](std::pair<int, std::unordered_map<int, int>> &value1, std::pair<int, std::unordered_map<int, int>> &value2) {return compareYCoordinate(value1, value2); });
-    }
+    // for (int i = 0; i < distancesVertical.size(); i++) {
+    //     std::sort(distancesVertical[i].begin(), distancesVertical[i].end(), 
+    //     [this](std::pair<int, std::unordered_map<int, int>> &value1, std::pair<int, std::unordered_map<int, int>> &value2) {
+    //         return compareCoordinates(value1, value2, true); 
+    //     });
+    // }
 
+    computeDistancesBetweenTransitNodes();
+    int x = 3;
+}
+
+// function which iterates over the distance table and finds for every pair of nodes 4 gridcells apart one node in the middle which is on the optimal path 
+// between the two nodes
+void TransitNodesRouting::findTransitNodes(std::vector<std::vector<std::pair<int, std::unordered_map<int, int>>>> &distances) {
     std::set<int> transitNodesPre;
-
-    for (int i = 0; i < distancesVertical.size(); i++) {
+    for (int i = 0; i < distances.size(); i++) {
+        // in the horizontal case, this start at -2 (because wraparound at antimerdian)
         int minYIndex = 0;
         int xComp = (i + 4) % gridsize;
-        for (int j = 0; j < distancesVertical[i].size(); j++) {
-            float v_y = Vec2::projectY(graph->nodes[distancesVertical[i][j].first].lat);
+        for (int j = 0; j < distances[i].size(); j++) {
+            // here we need to project into y for vertical and into x for horizontal
+            float v_y = Vec2::projectY(graph->nodes[distances[i][j].first].lat);
+
             int yGridCell = std::floor(v_y * gridsize);
             int maxCell = yGridCell - 2;
-            for (int k = minYIndex; k < distancesVertical[xComp].size(); k++) { 
-                int yGridCellRef = std::floor(Vec2(graph->nodes[distancesVertical[xComp][k].first]).y * gridsize);
+            for (int k = minYIndex; k < distances[xComp].size(); k++) { 
+                int yGridCellRef = std::floor(Vec2(graph->nodes[distances[xComp][k].first]).y * gridsize);
+                // gridCellRef is more than 2 grid cells above the current grid cell -> skip until back in range
                 if (yGridCellRef > yGridCell + 2) {
                     minYIndex++;
                     continue;
                 }
+                // out of range in the other direction -> can stop here
                 if (yGridCellRef < maxCell)
                     break;
                 int minDist = 2000000000;
                 int minVIndex = -1;
-                for (auto const &v : distancesVertical[i][j].second) {
+                for (auto const &v : distances[i][j].second) {
                     // don't take max int value here because of overflow
                     int ref_dist = 2000000000;
-                    if (distancesVertical[xComp][k].second.find(v.first) != distancesVertical[xComp][k].second.end())
-                        ref_dist = distancesVertical[xComp][k].second.at(v.first);
+                    if (distances[xComp][k].second.find(v.first) != distances[xComp][k].second.end())
+                        ref_dist = distances[xComp][k].second.at(v.first);
                     int orig_dist = v.second;
                     if (ref_dist + orig_dist < minDist) {
                         minDist = ref_dist + orig_dist;
@@ -168,13 +256,10 @@ void TransitNodesRouting::findTransitNodes() {
             }
         }
     }
-
     for (auto& tn : transitNodesPre) {
         if (tn != -1)
             transitNodes.push_back(tn);
     }
-    computeDistancesBetweenTransitNodes();
-    int x = 3;
 }
 
 // this should be trivial to run concurrently
@@ -316,7 +401,7 @@ void TransitNodesRouting::fillBucketsHorizontal(Vec2 start, Vec2 end, int edgeIn
     }
 }
 
-std::vector<Vec2Sphere> TransitNodesRouting::transformBack() {
+std::vector<Vec2Sphere> TransitNodesRouting::transformBack() { 
     std::vector<Vec2Sphere> nodes;
     for (int x = 0; x < gridsize; x++) {
         for (int y = 0; y < gridsize; y++) {

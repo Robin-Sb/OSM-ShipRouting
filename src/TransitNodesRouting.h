@@ -27,8 +27,10 @@ class TransitNodesRouting {
         void findBoundaryNodes(int xIndex, int yIndex, int localIndex, std::array<std::vector<int>, 5> &cArray, std::array<std::vector<int>, 5> &indicesOfCArray, std::vector<std::pair<bool, std::tuple<int,int, RelativePosition>>> &boundaryNodes, int &n_boundaryNodes, RelativePosition relPos);
         void findBoundaryNodesHorizontal(int xIndex, int yIndex, std::vector<int> &cArray, std::vector<int> &indicesOfCArray, std::vector<std::pair<bool, std::pair<int, RelativePosition>>> &boundaryNodes, int &n_boundaryNodes, RelativePosition relPos);
         void findBoundaryNodesDirectional(int xIndex, int yIndex, std::vector<int> &cArray, std::vector<int> &indicesOfCArray, std::vector<std::pair<bool, std::pair<int, RelativePosition>>> &boundaryNodes, int &n_boundaryNodes, std::vector<std::vector<std::vector<int>>> &edgeBuckets, RelativePosition relPos);
-        void processSingleNode(int sweepIndexX, int sweepIndexY, int edgeIndex, std::vector<std::vector<std::pair<int, std::unordered_map<int, int>>>>& distancesVertical, std::array<std::unordered_map<int, int>, 2>& nodeIdxToMapIdx);
-        void findTransitNodes(std::vector<std::vector<std::pair<int, std::unordered_map<int, int>>>> &distances);
+        void processSingleNodeVertical(int sweepIndexX, int sweepIndexY, int edgeIndex, std::vector<std::vector<std::pair<int, std::unordered_map<int, int>>>>& distancesVertical, std::array<std::unordered_map<int, int>, 2>& nodeIdxToMapIdx);
+        void processSingleNodeHorizontal(int sweepIndexX, int sweepIndexY, int edgeIndex, std::vector<std::vector<std::pair<int, std::unordered_map<int, int>>>>& distancesHorizontal, std::array<std::unordered_map<int, int>, 2>& nodeIdxToMapIdx);
+        
+        void findTransitNodes(std::vector<std::vector<std::pair<int, std::unordered_map<int, int>>>> &distances, bool isVertical);
 
         void storeDistances(int cellIndex, int vIndex, std::vector<int> &cArray, std::vector<int> &indicesOfCArray, std::vector<std::vector<std::pair<int, std::unordered_map<int, int>>>> &distancesVertical, std::array<std::unordered_map<int, int>, 2> &nodeToIdxMap, int lrIndex);
         bool compareCoordinates(std::pair<int, std::unordered_map<int, int>> &value1, std::pair<int, std::unordered_map<int, int>> &value2, bool sortByY);

@@ -44,6 +44,7 @@ Vec2::Vec2(Vec2Sphere sphereBase) {
     //y = std::asinh(std::tan(sphereBase.lat * deg_to_rad));
 }
 
+
 float Vec2::degToRad(float angleDeg) {
     return angleDeg * (pi / 180.0);
 }

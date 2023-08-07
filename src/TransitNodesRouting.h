@@ -3,11 +3,46 @@
 #include "Graph.h"
 #include <set>
 #include <unordered_map>
+#include <unordered_set>
 
 enum RelativePosition {
     LEFTLOWER,
     RIGHTUPPER,
     UNDEF
+};
+
+struct NodeDistances {
+    NodeDistances(int _nodeIndex, int _distanceToV) {
+        nodeIndex = _nodeIndex;
+        distanceToV = _distanceToV;
+    }
+    int nodeIndex;
+    int distanceToV;
+};
+
+struct DistanceData {
+    DistanceData(int _nodeId, std::unordered_map<int, int> _distanceToV) {
+        referenceNodeIndex = _nodeId;
+        distanceToV = _distanceToV;
+    }
+    int referenceNodeIndex;
+    std::unordered_map<int, int> distanceToV;
+};
+
+struct BoundaryNodeData {
+    BoundaryNodeData() {
+        isAtCellBoundary = false;
+        localIndex = -1;
+        relPos = RelativePosition::UNDEF;
+    }
+    BoundaryNodeData(bool _isAtCellBoundary, int _localIndex, RelativePosition _relPos) {
+        isAtCellBoundary = _isAtCellBoundary;
+        localIndex = _localIndex;
+        relPos = _relPos;
+    }
+    bool isAtCellBoundary;
+    int localIndex;
+    RelativePosition relPos;
 };
 
 class TransitNodesRouting {
@@ -27,17 +62,19 @@ class TransitNodesRouting {
         void fillBucketsHorizontal(Vec2 start, Vec2 end, int edgeIndex);
         void findBoundaryNodes(int xIndex, int yIndex, int localIndex, std::array<std::vector<int>, 5> &cArray, std::array<std::vector<int>, 5> &indicesOfCArray, std::vector<std::pair<bool, std::tuple<int,int, RelativePosition>>> &boundaryNodes, int &n_boundaryNodes, RelativePosition relPos);
         void findBoundaryNodesHorizontal(int xIndex, int yIndex, std::vector<int> &cArray, std::vector<int> &indicesOfCArray, std::vector<std::pair<bool, std::pair<int, RelativePosition>>> &boundaryNodes, int &n_boundaryNodes, RelativePosition relPos);
-        void findBoundaryNodesDirectional(int xIndex, int yIndex, std::vector<int> &cArray, std::vector<int> &indicesOfCArray, std::vector<std::pair<bool, std::pair<int, RelativePosition>>> &boundaryNodes, int &n_boundaryNodes, std::vector<std::vector<std::vector<int>>> &edgeBuckets, RelativePosition relPos);
-        void processSingleNodeVertical(int sweepIndexX, int sweepIndexY, int edgeIndex, std::vector<std::array<std::vector<std::pair<int, std::unordered_map<int, int>>>, 2>>& distancesVertical, std::array<std::unordered_map<int, int>, 2>& nodeIdxToMapIdx);
-        void processSingleNodeHorizontal(int sweepIndexX, int sweepIndexY, int edgeIndex, std::vector<std::array<std::vector<std::pair<int, std::unordered_map<int, int>>>, 2>> &distancesHorizontal, std::array<std::unordered_map<int, int>, 2>& nodeIdxToMapIdx);
+        void findBoundaryNodesDirectional(int xIndex, int yIndex, std::vector<NodeDistances> &cArray, std::vector<BoundaryNodeData> &boundaryNodes, int &n_boundaryNodes, std::vector<std::vector<std::vector<int>>> &edgeBuckets, RelativePosition relPos);
+        void processSingleNodeVertical(int sweepIndexX, int sweepIndexY, int vIndex, std::vector<DistanceData> &distancesLeft, std::vector<DistanceData> &distancesRight, std::array<std::unordered_map<int, int>, 2>& nodeIdxToMapIdx);
+        void processSingleNodeHorizontal(int sweepIndexX, int sweepIndexY, int vIndex, std::vector<std::array<std::vector<std::pair<int, std::unordered_map<int, int>>>, 2>> &distancesHorizontal, std::array<std::unordered_map<int, int>, 2>& nodeIdxToMapIdx);
         
         void findTransitNodes(std::vector<std::array<std::vector<std::pair<int, std::unordered_map<int, int>>>, 2>> &distances, bool isVertical);
+        void findTransitNodesNew(std::vector<DistanceData> &distancesLeft, std::vector<DistanceData> &distancesRight, std::vector<int> &vs);
 
-        void storeDistances(int cellIndex, int vIndex, std::vector<int> &cArray, std::vector<int> &indicesOfCArray, std::vector<std::array<std::vector<std::pair<int, std::unordered_map<int, int>>>, 2>> &distancesVertical, std::array<std::unordered_map<int, int>, 2> &nodeToIdxMap, int lrIndex);
-        bool compareCoordinates(std::pair<int, std::unordered_map<int, int>> &value1, std::pair<int, std::unordered_map<int, int>> &value2, bool sortByY);
-        void dijkstra(int startIndex, std::vector<std::pair<bool, std::pair<int, RelativePosition>>> &boundaryNodes, std::vector<int> &cLeft, std::vector<int> &cRight, int n_boundaryNodes);
+        // sweepIndexX, vIndex, cRight, distancesRight, nodeIdxToMapIdx[1], 1
+        void storeDistances(int cellIndex, int vIndex, std::vector<NodeDistances> &cArray, std::vector<DistanceData> &distances, std::unordered_map<int, int> &nodeToIdxMap);
+        bool compareCoordinates(DistanceData &value1, DistanceData &value2, bool sortByY);
+        void dijkstra(int startIndex, std::vector<BoundaryNodeData> &boundaryNodes, std::vector<NodeDistances> &cLeft, std::vector<NodeDistances> &cRight, int n_boundaryNodes);
         void computeDistancesBetweenTransitNodes(); 
-        void sortDescending(std::vector<std::array<std::vector<std::pair<int, std::unordered_map<int, int>>>, 2>> &distances, bool sortByY);
+        void sortDescending(std::vector<DistanceData> &distances, bool sortByY);
         std::vector<int> dijkstraSSSP(int source);
 
         int gridsize;

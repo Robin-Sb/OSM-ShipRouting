@@ -1,8 +1,8 @@
 #pragma once
 #include <vector>
-#include "Utils.h"
+#include "../utils/Utils.h"
 #include "math.h"
-#include "GraphUtils.h"
+#include "../utils/GraphUtils.h"
 
 enum CardinalDirection {
     EAST = 1,

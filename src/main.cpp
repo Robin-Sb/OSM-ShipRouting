@@ -9,10 +9,10 @@
 #include <algorithm>
 #include <random>
 #include "../libs/server_http.hpp"
-#include "PBFProcessing.h"
-#include "InPolyTest.h"
-#include "GeoWriter.h"
-#include "TransitNodesRouting.h"
+#include "./io/PBFProcessing.h"
+#include "./graph/InPolyTest.h"
+#include "./io/GeoWriter.h"
+#include "./transit_nodes/TransitNodesRouting.h"
 
 // The type of index used. This must match the include file above
 using index_type = osmium::index::map::FlexMem<osmium::unsigned_object_id_type, osmium::Location>;

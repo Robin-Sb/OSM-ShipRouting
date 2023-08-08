@@ -18,11 +18,13 @@ endif()
 
 include_directories(${OSMIUM_INCLUDE_DIRS})
 
-set(SOURCES src/main.cpp src/PBFProcessing.h src/PBFProcessing.cpp src/Graph.h src/Graph.cpp 
-src/Utils.h src/Utils.cpp src/InPolyTest.h src/InPolyTest.cpp src/GeoWriter.h src/GeoWriter.cpp 
-src/GraphUtils.h src/GraphUtils.cpp src/GraphGenerator.h src/GraphGenerator.cpp libs/server_http.hpp
-src/TransitNodesRouting.h src/TransitNodesRouting.cpp)
-add_executable(osm ${SOURCES})
+set(GRAPH src/graph/Graph.h src/graph/Graph.cpp src/graph/GraphGenerator.h src/graph/GraphGenerator.cpp src/graph/InPolyTest.h src/graph/InPolyTest.cpp)
+set(UTILS src/utils/Utils.h src/utils/Utils.cpp src/utils/GraphUtils.h src/utils/GraphUtils.cpp)
+set(IO  src/io/GeoWriter.h src/io/GeoWriter.cpp src/io/PBFProcessing.h src/io/PBFProcessing.cpp)
+set(TRANSIT_NODES src/transit_nodes/TransitNodesRouting.h src/transit_nodes/TransitNodesRouting.cpp)
+
+set(SOURCES src/main.cpp libs/server_http.hpp)
+add_executable(osm ${SOURCES} ${GRAPH} ${UTILS} ${IO} ${TRANSIT_NODES})
 target_include_directories(osm PRIVATE ${CMAKE_SOURCE_DIR}/src)
 target_link_libraries(osm -lz -pthread)
 

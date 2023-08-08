@@ -3,8 +3,8 @@
 #include <thread>
 #include <algorithm>
 #include <iostream>
-#include "Utils.h"
-#include "GraphUtils.h"
+#include "../utils/Utils.h"
+#include "../utils/GraphUtils.h"
 #include "InPolyTest.h"
 
 class GraphGenerator {

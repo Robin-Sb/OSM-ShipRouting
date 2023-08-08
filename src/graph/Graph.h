@@ -4,8 +4,8 @@
 #include <queue>
 #include <set>
 #include <iostream>
-#include "Utils.h"
-#include "GraphUtils.h"
+#include "../utils/Utils.h"
+#include "../utils/GraphUtils.h"
 #include "GraphGenerator.h"
 #include <chrono>
 #include <ctime>

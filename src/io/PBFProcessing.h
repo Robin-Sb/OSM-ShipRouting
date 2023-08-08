@@ -6,7 +6,7 @@
 #include <iostream>
 #include <osmium/handler.hpp>
 #include <unordered_map>
-#include "GraphUtils.h"
+#include "../utils/GraphUtils.h"
 
 class CoastHandler : public osmium::handler::Handler {
 public:

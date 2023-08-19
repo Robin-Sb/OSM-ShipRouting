@@ -45,12 +45,25 @@ struct BoundaryNodeData {
     RelativePosition relPos;
 };
 
+struct TransitNodesData {
+    TransitNodesData(std::vector<int> _transitNodes, std::vector<std::vector<int>> _distancesBetweenTransitNodes, std::vector<std::vector<std::vector<int>>> _transitNodesPerCell, std::vector<std::vector<int>> _distancesToLocalTransitNodes) {
+        transitNodes = _transitNodes;
+        distancesBetweenTransitNodes = _distancesBetweenTransitNodes;
+        transitNodesPerCell = _transitNodesPerCell;
+        distancesToLocalTransitNodes = _distancesToLocalTransitNodes;
+    }
+    std::vector<int> transitNodes;
+    std::vector<std::vector<int>> distancesBetweenTransitNodes;
+    std::vector<std::vector<std::vector<int>>> transitNodesPerCell;
+    std::vector<std::vector<int>> distancesToLocalTransitNodes;
+};
+
 class TransitNodesRouting {
     public:
         TransitNodesRouting(std::shared_ptr<Graph> _graph, int _gridsize);
         void findEdgeBuckets();
         void debug();
-        void sweepLineTransitNodesMain();
+        TransitNodesData sweepLineTransitNodesMain();
         std::vector<Vec2Sphere> getTransitNodesOfCell(int cellX, int cellY);
         std::string getTnList();
         std::vector<Vec2Sphere> transformBack(); 
@@ -75,6 +88,8 @@ class TransitNodesRouting {
         void computeDistancesBetweenTransitNodes(); 
         void sortDescending(std::vector<DistanceData> &distances, bool sortByY);
         std::vector<int> dijkstraSSSP(int source);
+
+        TransitNodesData postprocessTransitNodes();
 
         int gridsize;
         std::shared_ptr<Graph> graph;

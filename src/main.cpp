@@ -38,6 +38,45 @@ void generate_graph(Graph &graph, int amount, std::string &filename) {
     GeoWriter::writeToDisk(graph_fmi, filename);
 }
 
+bool isTheSame(TransitNodesData &tnrdata1, TransitNodesData &tnrdata2) {
+    if (tnrdata1.transitNodes.size() != tnrdata2.transitNodes.size())
+        return false;
+    for (int i = 0; i < tnrdata1.transitNodes.size(); i++) {
+        if (tnrdata1.transitNodes[i] != tnrdata2.transitNodes[i])
+            return false;
+    }
+    if (tnrdata1.distancesBetweenTransitNodes.size() != tnrdata2.distancesBetweenTransitNodes.size())
+        return false;
+    for (int i = 0; i < tnrdata1.distancesBetweenTransitNodes.size(); i++)  {
+        for (int j = 0; j < tnrdata2.distancesBetweenTransitNodes[i].size(); j++) {
+            if (tnrdata1.distancesBetweenTransitNodes[i][j] != tnrdata2.distancesBetweenTransitNodes[i][j])
+                return false;
+        }
+    } 
+    for (int x = 0; x < tnrdata1.transitNodesPerCell.size(); x++) {
+        for (int y = 0; y < tnrdata1.transitNodesPerCell[x].size(); y++) {
+            if (tnrdata1.transitNodesPerCell[x][y].size() != tnrdata2.transitNodesPerCell[x][y].size())
+                return false;
+            for (int i = 0; i < tnrdata1.transitNodesPerCell[x][y].size(); i++) {
+                if (tnrdata1.transitNodesPerCell[x][y][i] != tnrdata2.transitNodesPerCell[x][y][i])
+                    return false;
+            }
+        }
+    }
+    if (tnrdata1.distancesToLocalTransitNodes.size() != tnrdata2.distancesToLocalTransitNodes.size())
+        return false;
+
+    for (int i = 0; i < tnrdata1.distancesToLocalTransitNodes.size(); i++) {
+        if (tnrdata1.distancesToLocalTransitNodes[i].size() != tnrdata2.distancesToLocalTransitNodes[i].size())
+            return false;
+        for (int j = 0; j < tnrdata1.distancesToLocalTransitNodes[i].size(); j++) {
+            if (tnrdata1.distancesToLocalTransitNodes[i][j] != tnrdata2.distancesToLocalTransitNodes[i][j])
+                return false;
+        }
+    }
+    return true;
+}
+
 int getStart(std::string &query, std::string name) {
     return query.find(name + "=") + name.size() + 1;
 }
@@ -115,20 +154,25 @@ int main() {
     GeoWriter::buildGraphGeoJson(graph.nodes, graph.sources, graph.targets, "../shared_files/tnr_graph.json");
 
     std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
-    TransitNodesRouting tnr = TransitNodesRouting(graph_ptr, 512);
+    TransitNodesRouting tnr = TransitNodesRouting(graph_ptr, 256);
     tnr.findEdgeBuckets();
     std::vector<Vec2Sphere> gridNodes = tnr.transformBack();
     GeoWriter::buildNodesAsEdges(gridNodes, "../files/gridnodes_all.json");
     //tnr.debug();
-    tnr.sweepLineTransitNodesMain();
-    std::string tn_file = "../files/tn_list.txt";
-    GeoWriter::writeToDisk(tnr.getTnList(), tn_file);
+    TransitNodesData tnrData = tnr.sweepLineTransitNodesMain();
+
+
+    GeoWriter::writeTransitNodes(tnrData, "../shared_files/transit_nodes.tnr");
+    TransitNodesData tnrDataNew = GeoWriter::readTransitNodes("../shared_files/transit_nodes.tnr");
+    bool ioCorrect = isTheSame(tnrData, tnrDataNew);
+    if (!ioCorrect)
+        std::cout << "something went wrong when reading/writing transit nodes." << std::endl;
     std::vector<Vec2Sphere> tNodes; 
     for (int i = 0; i < tnr.transitNodes.size(); i++) {
         tNodes.push_back(graph.nodes[tnr.transitNodes[i]]);
     }
     GeoWriter::buildNodesGeoJson(tNodes, "../files/transit_nodes_small.json");
-    std::vector<Vec2Sphere> rangeTns = tnr.getTransitNodesOfCell(182, 346);
+    std::vector<Vec2Sphere> rangeTns = tnr.getTransitNodesOfCell(91, 173);
     GeoWriter::buildNodesGeoJson(rangeTns, "../files/cell_tns.json");
 
     //graph_tests(graph);

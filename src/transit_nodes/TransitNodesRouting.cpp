@@ -194,7 +194,7 @@ void TransitNodesRouting::sortDescending(std::vector<DistanceData> &distances, b
 
 // TODO: wraparound antimeridian and pole case
 // TODO: maybe the whole transit nodes search can be refactored into a new class
-void TransitNodesRouting::sweepLineTransitNodesMain() {
+TransitNodesData TransitNodesRouting::sweepLineTransitNodesMain() {
     // the nodeindices have 1:1 correspondence to mapindex anyway, why do we need to store both
     // [GridIndexX][GridIndexY][NodeIndex(In Array)]{NodeIndex (global), {vIndex, vDistance}}
     // set length of local transit nodes to avoid segfault
@@ -249,6 +249,8 @@ void TransitNodesRouting::sweepLineTransitNodesMain() {
     }
 
     computeDistancesBetweenTransitNodes();
+    TransitNodesData transitNodesData = postprocessTransitNodes();
+    return transitNodesData;
 }
 
 void TransitNodesRouting::findTransitNodes(std::vector<DistanceData> &nodesLeft, std::vector<DistanceData> &nodesRight, std::vector<int> &vs, std::unordered_map<int, std::vector<NodeDistance>> &distancesToNearestTransitNode, int sweepIndex, bool vertical) {
@@ -320,21 +322,32 @@ void TransitNodesRouting::findTransitNodes(std::vector<DistanceData> &nodesLeft,
             }
         }
     }
+}
 
 
-    // for (auto& tn : transitNodesPre) {
-    //     // TODO: figure out what I tried to do here with transitNodeTmp and fix
-    //     if (transitNodeTmp.find(tn) == transitNodeTmp.end()) {
-    //         transitNodeTmp[tn] = transitNodes.size();
-    //         transitNodes.push_back(tn);
-    //     }
-    //     std::vector<NodeDistance> distancesToTN = distancesToNearestTransitNode.at(tn);
-    //     for (int j = 0; j < distancesToTN.size(); j++) {
-    //         int uIndex = distancesToTN[j].nodeIndex;
-    //         int dist = distancesToTN[j].distanceToV;
-    //         localTransitNodes[uIndex].push_back(NodeDistance(tn, dist));
-    //     }
-    // }
+TransitNodesData TransitNodesRouting::postprocessTransitNodes() {
+    // convert to array instead of set for consistent ordering
+    std::vector<std::vector<std::vector<int>>> transitNodesPerCell (gridsize, std::vector<std::vector<int>> (gridsize));
+    for (int x = 0; x < gridsize; x++) {
+        for (int y = 0; y < gridsize; y++) {
+            for (auto &i : transitNodesOfCells[x][y]) {
+                transitNodesPerCell[x][y].push_back(i);
+            }
+        }
+    }
+
+    std::vector<std::vector<int>> distancesToLocalTransitNodes (graph->nodes.size());
+    for (int i = 0; i < localTransitNodes.size(); i++) {
+        int cellX = getCellX(graph->nodes[i], gridsize);
+        int cellY = getCellY(graph->nodes[i], gridsize);
+        for (int k = 0; k < transitNodesPerCell[cellX][cellY].size(); k++) {
+            for (int j = 0; j < localTransitNodes[i].size(); j++) {
+                if (localTransitNodes[i][j].nodeIndex == transitNodesPerCell[cellX][cellY][k])
+                    distancesToLocalTransitNodes[i].push_back(localTransitNodes[i][j].distanceToV);
+            }
+        }
+    }
+    return TransitNodesData(transitNodes, transitNodesDistances, transitNodesPerCell, distancesToLocalTransitNodes);
 }
 
 bool TransitNodesRouting::sameCell(Vec2Sphere &v1, Vec2Sphere &v2) {

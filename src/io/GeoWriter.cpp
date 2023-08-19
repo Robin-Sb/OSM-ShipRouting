@@ -274,3 +274,102 @@ void GeoWriter::readEdges(std::ifstream &file, int m, std::vector<int> &sources,
         offsets[source + 1] += 1;
     }
 }
+
+
+void GeoWriter::writeTransitNodes(TransitNodesData &tnr, std::string filename) {
+    std::string out;
+    // append #transitnodes and gridsize and #nodes
+    out += std::to_string(tnr.transitNodes.size()) + "\n";
+    out += std::to_string(tnr.transitNodesPerCell.size()) + "\n";
+    out += std::to_string(tnr.distancesToLocalTransitNodes.size()) + "\n";
+    // append transit nodes
+    for (int i = 0; i < tnr.transitNodes.size(); i++) 
+        out += std::to_string(tnr.transitNodes[i]) + "\n";
+
+    for (int i = 0; i < tnr.distancesBetweenTransitNodes.size(); i++) {
+        for (int j = 0; j < tnr.distancesBetweenTransitNodes[i].size(); j++) {
+            out += std::to_string(tnr.distancesBetweenTransitNodes[i][j]) + "\n";
+        }
+    }
+
+    for (int x = 0; x < tnr.transitNodesPerCell.size(); x++) {
+        for (int y = 0; y < tnr.transitNodesPerCell[x].size(); y++) {
+            for (int k = 0; k < tnr.transitNodesPerCell[x][y].size(); k++) {
+                out += std::to_string(tnr.transitNodesPerCell[x][y][k])+ + "\n";
+            }
+            out += "-\n";
+        }
+    }
+
+    for (int i = 0; i < tnr.distancesToLocalTransitNodes.size(); i++) {
+        for (int k = 0; k < tnr.distancesToLocalTransitNodes[i].size(); k++) {
+            out += std::to_string(tnr.distancesToLocalTransitNodes[i][k])+ + "\n";
+        }
+        out += "-\n";
+    }
+    
+    GeoWriter::writeToDisk(out, filename);
+}
+
+TransitNodesData GeoWriter::readTransitNodes(std::string filename) {
+    std::ifstream file(filename);
+    if (file.is_open()) {
+        std::string n_tnNodes_str;
+        std::getline(file, n_tnNodes_str);
+        std::string gridsize_str;
+        std::getline(file, gridsize_str);
+        std::string n_nodes_str;
+        std::getline(file, n_nodes_str);
+
+        int n_tnNodes = std::stoi(n_tnNodes_str);
+        int gridsize = std::stoi(gridsize_str);
+        int n_nodes = std::stoi(n_nodes_str);
+        
+        std::vector<std::vector<int>> distancesBetweenTransitNodes(n_tnNodes, std::vector<int>(n_tnNodes));
+        std::vector<int> transitNodes;
+        std::vector<std::vector<std::vector<int>>> transitNodesPerCell(gridsize, std::vector<std::vector<int>>(gridsize));
+        std::vector<std::vector<int>> distancesToLocalTransitNodes(n_nodes);
+        for (int i = 0; i < n_tnNodes; i++) {
+            std::string line;
+            std::getline(file, line);
+            transitNodes.push_back(std::stoi(line));
+        }
+        for (int i = 0; i < n_tnNodes; i++) {
+            for (int j = 0; j < n_tnNodes; j++) {
+                std::string line;
+                std::getline(file, line);
+                distancesBetweenTransitNodes[i][j] = std::stoi(line);
+            }
+        }
+
+        for (int x = 0; x < gridsize; x++) {
+            for (int y = 0; y < gridsize; y++) {
+                while (true) {
+                    std::string line;
+                    std::getline(file, line);
+                    if (line.find("-") != std::string::npos)
+                        break;
+
+                    int transitNode = std::stoi(line);
+                    transitNodesPerCell[x][y].push_back(transitNode);
+                }
+            }
+        }
+
+        for (int i = 0; i < n_nodes; i++) {
+            while(true) {
+                std::string line;
+                std::getline(file, line);
+                if (line.find("-") != std::string::npos)
+                    break;
+
+
+                int tnDistances = std::stoi(line);
+                distancesToLocalTransitNodes[i].push_back(tnDistances);
+            }   
+        }
+        TransitNodesData tnData = TransitNodesData(transitNodes, distancesBetweenTransitNodes, transitNodesPerCell, distancesToLocalTransitNodes);
+        return tnData;
+    }
+    throw std::runtime_error("Could not open the specified file.");
+}

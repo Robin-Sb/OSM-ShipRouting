@@ -3,6 +3,9 @@
 #include "../graph/Graph.h"
 #include <iostream>
 #include <fstream>
+#include <stdexcept>
+// refactor, imo this should not be included here (factor out TransitNodesData in some def file)
+#include "../transit_nodes/TransitNodesRouting.h"
 
 
 class GeoWriter {
@@ -27,4 +30,7 @@ class GeoWriter {
         static void buildGraphFromFMI(std::string filename);
         static void readNodes(std::ifstream &file, int n, std::vector<int> &offsets, std::vector<Vec2Sphere> &nodes);
         static void readEdges(std::ifstream &file, int m, std::vector<int> &sources, std::vector<int> targets, std::vector<int> &costs, std::vector<int> &offsets);
+
+        static void writeTransitNodes(TransitNodesData &tnr, std::string filename);
+        static TransitNodesData readTransitNodes(std::string filename);
 };

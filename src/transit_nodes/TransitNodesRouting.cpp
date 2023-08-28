@@ -260,7 +260,7 @@ void TransitNodesRouting::findTransitNodes(std::vector<DistanceData> &nodesLeft,
             DistanceData vL = nodesLeft[i];
             DistanceData vR = nodesRight[j];
 
-            auto getCell = vertical ? getCellY : getCellX;
+            auto getCell = vertical ? UtilFunctions::getCellY : UtilFunctions::getCellX;
             int gridCellL = getCell(graph->nodes[vL.referenceNodeIndex], gridsize);
             int gridCellR = getCell(graph->nodes[vR.referenceNodeIndex], gridsize);
 
@@ -314,8 +314,8 @@ void TransitNodesRouting::findTransitNodes(std::vector<DistanceData> &nodesLeft,
             std::vector<NodeDistance> correspondingNodes = potentialTn.second;
             for (int i = 0; i < correspondingNodes.size(); i++) {
                 int nodeIndex = correspondingNodes[i].nodeIndex;
-                int cellX = getCellX(graph->nodes[nodeIndex], gridsize);
-                int cellY = getCellY(graph->nodes[nodeIndex], gridsize);
+                int cellX = UtilFunctions::getCellX(graph->nodes[nodeIndex], gridsize);
+                int cellY = UtilFunctions::getCellY(graph->nodes[nodeIndex], gridsize);
                 if (transitNodesOfCells[cellX][cellY].find(tnIndexLocal) != transitNodesOfCells[cellX][cellY].end()) {
                     localTransitNodes[nodeIndex].push_back(NodeDistance(tnIndexLocal, correspondingNodes[i].distanceToV));
                 }
@@ -338,8 +338,8 @@ TransitNodesData TransitNodesRouting::postprocessTransitNodes() {
 
     std::vector<std::vector<int>> distancesToLocalTransitNodes (graph->nodes.size());
     for (int i = 0; i < localTransitNodes.size(); i++) {
-        int cellX = getCellX(graph->nodes[i], gridsize);
-        int cellY = getCellY(graph->nodes[i], gridsize);
+        int cellX = UtilFunctions::getCellX(graph->nodes[i], gridsize);
+        int cellY = UtilFunctions::getCellY(graph->nodes[i], gridsize);
         for (int k = 0; k < transitNodesPerCell[cellX][cellY].size(); k++) {
             for (int j = 0; j < localTransitNodes[i].size(); j++) {
                 if (localTransitNodes[i][j].nodeIndex == transitNodesPerCell[cellX][cellY][k])
@@ -347,24 +347,7 @@ TransitNodesData TransitNodesRouting::postprocessTransitNodes() {
             }
         }
     }
-    return TransitNodesData(transitNodes, transitNodesDistances, transitNodesPerCell, distancesToLocalTransitNodes);
-}
-
-bool TransitNodesRouting::sameCell(Vec2Sphere &v1, Vec2Sphere &v2) {
-    if (getCellX(v1, gridsize) == getCellX(v2, gridsize) &&
-        getCellY(v1, gridsize) == getCellY(v2, gridsize)) 
-        return true;
-    return false;
-}
-
-int TransitNodesRouting::getCellX(Vec2Sphere &v, int gridX) {
-    float x = Vec2::projectX(v.lon);
-    return std::floor(x * gridX);
-}
-
-int TransitNodesRouting::getCellY(Vec2Sphere &v, int gridY) {
-    float y = Vec2::projectY(v.lat);
-    return std::floor(y * gridY);
+    return TransitNodesData(transitNodes, transitNodesDistances, transitNodesPerCell, distancesToLocalTransitNodes, gridsize, gridsize);
 }
 
 

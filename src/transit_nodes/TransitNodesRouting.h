@@ -1,62 +1,10 @@
 #pragma once
 #include <vector>
-#include "../graph/Graph.h"
 #include <set>
 #include <unordered_map>
 #include <unordered_set>
-
-enum RelativePosition {
-    LEFTLOWER,
-    RIGHTUPPER,
-    UNDEF
-};
-
-struct NodeDistance {
-    NodeDistance(int _nodeIndex, int _distanceToV) {
-        nodeIndex = _nodeIndex;
-        distanceToV = _distanceToV;
-    }
-    int nodeIndex;
-    int distanceToV;
-};
-
-struct DistanceData {
-    DistanceData(int _nodeId, std::unordered_map<int, int> _distanceToV) {
-        referenceNodeIndex = _nodeId;
-        distanceToV = _distanceToV;
-    }
-    int referenceNodeIndex;
-    std::unordered_map<int, int> distanceToV;
-};
-
-struct BoundaryNodeData {
-    BoundaryNodeData() {
-        isAtCellBoundary = false;
-        localIndex = -1;
-        relPos = RelativePosition::UNDEF;
-    }
-    BoundaryNodeData(bool _isAtCellBoundary, int _localIndex, RelativePosition _relPos) {
-        isAtCellBoundary = _isAtCellBoundary;
-        localIndex = _localIndex;
-        relPos = _relPos;
-    }
-    bool isAtCellBoundary;
-    int localIndex;
-    RelativePosition relPos;
-};
-
-struct TransitNodesData {
-    TransitNodesData(std::vector<int> _transitNodes, std::vector<std::vector<int>> _distancesBetweenTransitNodes, std::vector<std::vector<std::vector<int>>> _transitNodesPerCell, std::vector<std::vector<int>> _distancesToLocalTransitNodes) {
-        transitNodes = _transitNodes;
-        distancesBetweenTransitNodes = _distancesBetweenTransitNodes;
-        transitNodesPerCell = _transitNodesPerCell;
-        distancesToLocalTransitNodes = _distancesToLocalTransitNodes;
-    }
-    std::vector<int> transitNodes;
-    std::vector<std::vector<int>> distancesBetweenTransitNodes;
-    std::vector<std::vector<std::vector<int>>> transitNodesPerCell;
-    std::vector<std::vector<int>> distancesToLocalTransitNodes;
-};
+#include "TransitNodesDef.h"
+#include "../graph/Graph.h"
 
 class TransitNodesRouting {
     public:
@@ -98,10 +46,4 @@ class TransitNodesRouting {
 
         std::vector<std::vector<std::unordered_set<int>>> transitNodesOfCells;
         std::unordered_map<int, int> transitNodeTmp;
-
-        static int getCellX(Vec2Sphere &v, int gridX);
-        static int getCellY(Vec2Sphere &v, int gridY);
-
-        bool sameCell(Vec2Sphere &v1, Vec2Sphere &v2);
-
 };

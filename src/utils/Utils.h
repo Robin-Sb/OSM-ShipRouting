@@ -81,3 +81,11 @@ class Vec2 {
     private:
         static float degToRad(float angleDeg);
 };
+
+class UtilFunctions {
+    public: 
+        static int getCellX(Vec2Sphere &v, int gridX);
+        static int getCellY(Vec2Sphere &v, int gridY);
+
+        static bool sameCell(Vec2Sphere &v1, Vec2Sphere &v2, int gridsize);
+};

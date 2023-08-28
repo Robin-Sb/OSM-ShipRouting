@@ -13,6 +13,8 @@
 #include "./graph/InPolyTest.h"
 #include "./io/GeoWriter.h"
 #include "./transit_nodes/TransitNodesRouting.h"
+#include "./transit_nodes/TransitNodesQuery.h"
+#include "./transit_nodes/TransitNodesDef.h"
 
 // The type of index used. This must match the include file above
 using index_type = osmium::index::map::FlexMem<osmium::unsigned_object_id_type, osmium::Location>;
@@ -167,6 +169,11 @@ int main() {
     bool ioCorrect = isTheSame(tnrData, tnrDataNew);
     if (!ioCorrect)
         std::cout << "something went wrong when reading/writing transit nodes." << std::endl;
+    
+    TransitNodesQuery tnQuery = TransitNodesQuery(graph_ptr, tnrData);
+    tnQuery.query(2763, 6);
+    graph_ptr->dijkstra(6, 2764);
+    
     std::vector<Vec2Sphere> tNodes; 
     for (int i = 0; i < tnr.transitNodes.size(); i++) {
         tNodes.push_back(graph.nodes[tnr.transitNodes[i]]);

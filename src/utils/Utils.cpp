@@ -58,3 +58,21 @@ float Vec2::projectY(float lat) {
     lat = Vec2::degToRad(lat);
     return ((lat - 0) + (pi / 2)) / pi;
 }
+
+
+bool UtilFunctions::sameCell(Vec2Sphere &v1, Vec2Sphere &v2, int gridsize) {
+    if (getCellX(v1, gridsize) == getCellX(v2, gridsize) &&
+        getCellY(v1, gridsize) == getCellY(v2, gridsize)) 
+        return true;
+    return false;
+}
+
+int UtilFunctions::getCellX(Vec2Sphere &v, int gridX) {
+    float x = Vec2::projectX(v.lon);
+    return std::floor(x * gridX);
+}
+
+int UtilFunctions::getCellY(Vec2Sphere &v, int gridY) {
+    float y = Vec2::projectY(v.lat);
+    return std::floor(y * gridY);
+}

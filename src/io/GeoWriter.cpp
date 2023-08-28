@@ -368,7 +368,7 @@ TransitNodesData GeoWriter::readTransitNodes(std::string filename) {
                 distancesToLocalTransitNodes[i].push_back(tnDistances);
             }   
         }
-        TransitNodesData tnData = TransitNodesData(transitNodes, distancesBetweenTransitNodes, transitNodesPerCell, distancesToLocalTransitNodes);
+        TransitNodesData tnData = TransitNodesData(transitNodes, distancesBetweenTransitNodes, transitNodesPerCell, distancesToLocalTransitNodes, gridsize, gridsize);
         return tnData;
     }
     throw std::runtime_error("Could not open the specified file.");

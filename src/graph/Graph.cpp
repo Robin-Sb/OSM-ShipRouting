@@ -120,7 +120,7 @@ ResultDTO Graph::dijkstra(int source, int target) {
             if (explored[v])
                 continue;
 
-            int altDist = dist[u] + costs[v];
+            int altDist = dist[u] + costs[i];
             if (altDist < dist[v]) {
                 dist[v] = altDist;
                 prev[v] = u;
@@ -135,6 +135,7 @@ ResultDTO Graph::dijkstra(int source, int target) {
         path.push_back(currentNode);
         currentNode = prev[currentNode];
     }
+    //path.push_back(source);
 
     std::reverse(path.begin(), path.end());
     std::vector<Vec2Sphere> nodePath;
@@ -187,12 +188,16 @@ void Graph::readNodes(std::ifstream &file, int n) {
 }
 
 
-void Graph::generate(int n, std::vector<SingleCoast> &coastlines) {
+void Graph::generate(int n, std::vector<SingleCoast> &coastlines, float minLat, float maxLat, float minLon, float maxLon) {
     GraphGenerator generator = GraphGenerator();
-    generator.generate(n, coastlines);
+    generator.generate(n, coastlines, minLat, maxLat, minLon, maxLon);
     // kind of expensive copying
     nodes = generator.nodes;
     sources = generator.sources;
     targets = generator.targets;
     costs = generator.costs;
+}
+
+void Graph::generate(int n, std::vector<SingleCoast> &coastlines) {
+    generate(n, coastlines);
 }

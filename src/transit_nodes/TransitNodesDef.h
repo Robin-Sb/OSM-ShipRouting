@@ -1,6 +1,7 @@
 #pragma once
 #include <unordered_map>
 #include <vector>
+#include "../utils/Utils.h"
 
 enum RelativePosition {
     LEFTLOWER,
@@ -18,10 +19,12 @@ struct NodeDistance {
 };
 
 struct DistanceData {
-    DistanceData(int _nodeId, std::unordered_map<int, int> _distanceToV) {
+    DistanceData(int _nodeId, std::unordered_map<int, int> _distanceToV, Vec2 _cell) {
         referenceNodeIndex = _nodeId;
         distanceToV = _distanceToV;
+        cell = _cell;
     }
+    Vec2 cell;
     int referenceNodeIndex;
     std::unordered_map<int, int> distanceToV;
 };

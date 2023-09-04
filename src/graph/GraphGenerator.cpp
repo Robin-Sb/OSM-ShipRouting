@@ -1,7 +1,7 @@
 #include "GraphGenerator.h"
 
 
-void GraphGenerator::generate(int n, std::vector<SingleCoast> &coastlines) {
+void GraphGenerator::generate(int n, std::vector<SingleCoast> &coastlines, float minLat, float maxLat, float minLon, float maxLon) {
     InPolyTest polyTest = InPolyTest(coastlines);
     const float pi = 3.141592;
     const float r = 6371;
@@ -22,8 +22,10 @@ void GraphGenerator::generate(int n, std::vector<SingleCoast> &coastlines) {
         float y = std::sqrt(r * r - z * z) * std::sin(phi);
         float lat = std::asin(z / r) * rad_to_deg;
         float lon = std::atan2(y, x) * rad_to_deg;
-        Vec2Sphere node = Vec2Sphere(lat, lon);
-        allNodes.push_back(node);
+        if (lat >= minLat && lat <= maxLat && lon >= minLon && lon <= maxLon) {
+            Vec2Sphere node = Vec2Sphere(lat, lon);
+            allNodes.push_back(node);
+        }
     }
     performPolyTestsConcurrent(allNodes, polyTest, 6);
     performEdgeSearchConcurrent(6);
@@ -34,7 +36,13 @@ void GraphGenerator::generate(int n, std::vector<SingleCoast> &coastlines) {
     std::cout << "finished computation at " << std::ctime(&end_time)
             << "elapsed time: " << elapsed_seconds.count() << "s"
             << std::endl;
+
 }
+
+
+// void GraphGenerator::generate(int n, std::vector<SingleCoast> &coastlines) {
+//     generate(n, coastlines, -90, 90, -180, 180);
+// }
 
 
 void GraphGenerator::performPolyTestsConcurrent(std::vector<Vec2Sphere> &allNodes, InPolyTest &polyTest, int n_threads) {
@@ -65,40 +73,59 @@ void GraphGenerator::performEdgeSearchConcurrent(int n_threads) {
     std::vector<std::thread> threadPool;
     std::shared_ptr<std::vector<Vec2Sphere>> _nodes = std::make_shared<std::vector<Vec2Sphere>>(nodes);
     SphericalGrid grid = SphericalGrid(_nodes);
-    std::vector<std::shared_ptr<std::vector<int>>> sources_trimmed;
-    std::vector<std::shared_ptr<std::vector<int>>> targets_trimmed;
-    std::vector<std::shared_ptr<std::vector<int>>> dists_trimmed;
+    std::vector<std::shared_ptr<std::vector<Edge>>> edgesAll;
+    // std::vector<std::shared_ptr<std::vector<int>>> sources_trimmed;
+    // std::vector<std::shared_ptr<std::vector<int>>> targets_trimmed;
+    // std::vector<std::shared_ptr<std::vector<int>>> dists_trimmed;
 
     for (int i = 0; i < n_threads; i++) {
-        std::vector<int> sources_partial;
-        std::vector<int> targets_partial;
-        std::vector<int> dists_partial;
-        std::shared_ptr<std::vector<int>> sources_ptr = std::make_shared<std::vector<int>>(sources_partial);
-        std::shared_ptr<std::vector<int>> targets_ptr = std::make_shared<std::vector<int>>(targets_partial);
-        std::shared_ptr<std::vector<int>> dists_ptr = std::make_shared<std::vector<int>>(dists_partial);
+        // std::vector<int> sources_partial;
+        // std::vector<int> targets_partial;
+        // std::vector<int> dists_partial;
+        std::vector<Edge> edgesPartial;
+        std::shared_ptr<std::vector<Edge>> edges_ptr = std::make_shared<std::vector<Edge>>(edgesPartial);
+        // std::shared_ptr<std::vector<int>> sources_ptr = std::make_shared<std::vector<int>>(sources_partial);
+        // std::shared_ptr<std::vector<int>> targets_ptr = std::make_shared<std::vector<int>>(targets_partial);
+        // std::shared_ptr<std::vector<int>> dists_ptr = std::make_shared<std::vector<int>>(dists_partial);
         int startIndex = std::floor(i * (nodes.size() / n_threads));
         int endIndex = std::floor((i + 1) * (nodes.size() / n_threads));
         if (i == nodes.size() - 1) 
             endIndex = nodes.size();
-        threadPool.push_back(std::thread(findEdgeConcurrent, std::ref(nodes), startIndex, endIndex, std::ref(grid), sources_ptr, targets_ptr, dists_ptr));
-        sources_trimmed.push_back(sources_ptr);
-        targets_trimmed.push_back(targets_ptr);
-        dists_trimmed.push_back(dists_ptr);
+        threadPool.push_back(std::thread(findEdgeConcurrent, std::ref(nodes), startIndex, endIndex, std::ref(grid), edges_ptr));
+        edgesAll.push_back(edges_ptr);
+        // targets_trimmed.push_back(targets_ptr);
+        // dists_trimmed.push_back(dists_ptr);
     }
 
+    std::vector<Edge> edges;
     for (int i = 0; i < n_threads; i++) {
         threadPool[i].join();
-        for (int j = 0; j < sources_trimmed[i]->size(); j++) {
-            sources.push_back(sources_trimmed[i]->at(j));
-            targets.push_back(targets_trimmed[i]->at(j));
-            costs.push_back(dists_trimmed[i]->at(j));
+        for (int j = 0; j < edgesAll[i]->size(); j++) {
+            edges.push_back(edgesAll[i]->at(j));
+            // sources.push_back(sources_trimmed[i]->at(j));
+            // targets.push_back(targets_trimmed[i]->at(j));
+            // costs.push_back(dists_trimmed[i]->at(j));
         }
     }
-    auto permu = sort_permutation(sources, [](int const& a, int const& b) {return a < b;});
-    sources = apply_permutation(sources, permu);
-    targets = apply_permutation(targets, permu);
-    costs = apply_permutation(costs, permu);
-
+    std::sort(edges.begin(), edges.end(), [](Edge const& edge1, Edge const& edge2) {return edge1.source < edge2.source;});
+    // bad quadratic function which filters duplicates
+    for (int i = 0; i < edges.size(); i++) {
+        bool existsAlready = false;
+        for (int j = 0; j < i; j++) {
+            if (edges[i].source == edges[j].source && edges[i].target == edges[j].target) {
+                existsAlready = true;
+            }
+        }
+        if (!existsAlready) {
+            sources.push_back(edges[i].source);
+            targets.push_back(edges[i].target);
+            costs.push_back(edges[i].cost);
+        }
+    }
+    // auto permu = sort_permutation(sources, [](int const& a, int const& b) {return a < b;});
+    // sources = apply_permutation(sources, permu);
+    // targets = apply_permutation(targets, permu);
+    // costs = apply_permutation(costs, permu);
 }
 
 void GraphGenerator::addNodeConcurrent(std::vector<Vec2Sphere> &allNodes, int rangeStart, int rangeEnd, InPolyTest &polyTest, std::shared_ptr<std::vector<Vec2Sphere>> outNodes) {
@@ -112,28 +139,36 @@ void GraphGenerator::addNodeConcurrent(std::vector<Vec2Sphere> &allNodes, int ra
     }
 }
 
-void GraphGenerator::findEdgeConcurrent(std::vector<Vec2Sphere> &allNodes, int startIndex, int endIndex, SphericalGrid &grid,  std::shared_ptr<std::vector<int>> _sources, std::shared_ptr<std::vector<int>> _targets, std::shared_ptr<std::vector<int>> _costs) {
+void GraphGenerator::findEdgeConcurrent(std::vector<Vec2Sphere> &allNodes, int startIndex, int endIndex, SphericalGrid &grid,  std::shared_ptr<std::vector<Edge>> _edges) {
     for (int i = startIndex; i < endIndex; i++) {
         FoundNodes closestPoints = grid.findClosestPoints(allNodes[i], 30000);
         if (closestPoints.leftBottom.index != -1) {
-            _sources->push_back(i);
-            _targets->push_back(closestPoints.leftBottom.index);
-            _costs->push_back(std::floor(closestPoints.leftBottom.dist));
+            _edges->push_back(Edge(i, closestPoints.leftBottom.index, std::floor(closestPoints.leftBottom.dist)));
+            _edges->push_back(Edge(closestPoints.leftBottom.index, i, std::floor(closestPoints.leftBottom.dist)));
+            // _sources->push_back(i);
+            // _targets->push_back(closestPoints.leftBottom.index);
+            // _costs->push_back(std::floor(closestPoints.leftBottom.dist));
         }
         if (closestPoints.rightBottom.index != -1) {
-            _sources->push_back(i);
-            _targets->push_back(closestPoints.rightBottom.index);
-            _costs->push_back(std::floor(closestPoints.rightBottom.dist));
+            _edges->push_back(Edge(i, closestPoints.rightBottom.index, std::floor(closestPoints.rightBottom.dist)));
+            _edges->push_back(Edge(closestPoints.rightBottom.index, i, std::floor(closestPoints.rightBottom.dist)));
+            // _sources->push_back(i);
+            // _targets->push_back(closestPoints.rightBottom.index);
+            // _costs->push_back(std::floor(closestPoints.rightBottom.dist));
         }
         if (closestPoints.leftTop.index != -1) {
-            _sources->push_back(i);
-            _targets->push_back(closestPoints.leftTop.index);
-            _costs->push_back(std::floor(closestPoints.leftTop.dist));
+            _edges->push_back(Edge(i, closestPoints.leftTop.index, std::floor(closestPoints.leftTop.dist)));
+            _edges->push_back(Edge(closestPoints.leftTop.index, i, std::floor(closestPoints.leftTop.dist)));
+            // _sources->push_back(i);
+            // _targets->push_back(closestPoints.leftTop.index);
+            // _costs->push_back(std::floor(closestPoints.leftTop.dist));
         }
         if (closestPoints.rightTop.index != -1) {
-            _sources->push_back(i);
-            _targets->push_back(closestPoints.rightTop.index);
-            _costs->push_back(std::floor(closestPoints.rightTop.dist));
+            _edges->push_back(Edge(i, closestPoints.rightTop.index, std::floor(closestPoints.rightTop.dist)));
+            _edges->push_back(Edge(closestPoints.rightTop.index, i, std::floor(closestPoints.rightTop.dist)));
+            // _sources->push_back(i);
+            // _targets->push_back(closestPoints.rightTop.index);
+            // _costs->push_back(std::floor(closestPoints.rightTop.dist));
         }
     }
 }

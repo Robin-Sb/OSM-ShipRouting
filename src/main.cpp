@@ -35,7 +35,7 @@ void generate_graph(Graph &graph, int amount, std::string &filename) {
     reader.close();
     CoastlineStitcher stitcher = CoastlineStitcher(handler.coastlines);
     std::vector<SingleCoast> coastlines = stitcher.stitchCoastlines();
-    graph.generate(amount, coastlines);
+    graph.generate(amount, coastlines, 30, 35, -55, -45);
     std::string graph_fmi = GeoWriter::generateFMI(graph.nodes, graph.sources, graph.targets, graph.costs);
     GeoWriter::writeToDisk(graph_fmi, filename);
 }
@@ -77,6 +77,25 @@ bool isTheSame(TransitNodesData &tnrdata1, TransitNodesData &tnrdata2) {
         }
     }
     return true;
+}
+
+void checkGraphBidirectional(Graph &graph) {
+    bool bidir = true;
+    for (int i = 0; i < graph.sources.size(); i++) {
+        bool exists = false;
+        for (int j = 0; j < graph.sources.size(); j++) {
+            if (i == j)
+                continue;
+            if (graph.sources[i] == graph.targets[j] && graph.targets[i] == graph.sources[j])
+                exists = true;
+        } 
+        if (!exists) {
+            std::cout << "Graph is not bidirectional." << "\n";
+            bidir = false;
+        }
+    }
+    if (bidir)
+        std::cout << "Graph is bidirectional." << "\n";
 }
 
 int getStart(std::string &query, std::string name) {
@@ -144,25 +163,25 @@ void graph_tests(Graph &graph) {
 
 int main() {
     Graph graph = Graph();
-    std::string filename = "../shared_files/graph_small_test.fmi";
+    std::string filename = "../files/graph_small_bidir.fmi";
     if (checkIfFileExists(filename)) {
         graph.buildFromFMI(filename);
     } else {
         generate_graph(graph, 4000000, filename);
     }
 
+    checkGraphBidirectional(graph);
+
     // graph.trim(30, 35, -55, -45);
     // GeoWriter::generateFMI(graph.nodes, graph.sources, graph.targets, graph.costs, "../files/graph_small_test.fmi");
-    GeoWriter::buildGraphGeoJson(graph.nodes, graph.sources, graph.targets, "../shared_files/tnr_graph.json");
+    //GeoWriter::buildGraphGeoJson(graph.nodes, graph.sources, graph.targets, "../files/tnr_graph_test.json");
 
     std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
     TransitNodesRouting tnr = TransitNodesRouting(graph_ptr, 256);
     tnr.findEdgeBuckets();
     std::vector<Vec2Sphere> gridNodes = tnr.transformBack();
     GeoWriter::buildNodesAsEdges(gridNodes, "../files/gridnodes_all.json");
-    //tnr.debug();
     TransitNodesData tnrData = tnr.sweepLineTransitNodesMain();
-
 
     GeoWriter::writeTransitNodes(tnrData, "../shared_files/transit_nodes.tnr");
     TransitNodesData tnrDataNew = GeoWriter::readTransitNodes("../shared_files/transit_nodes.tnr");
@@ -181,6 +200,9 @@ int main() {
     GeoWriter::buildNodesGeoJson(tNodes, "../files/transit_nodes_small.json");
     std::vector<Vec2Sphere> rangeTns = tnr.getTransitNodesOfCell(91, 173);
     GeoWriter::buildNodesGeoJson(rangeTns, "../files/cell_tns.json");
+
+
+
 
     //graph_tests(graph);
     // std::string graph_json = GeoWriter::buildGraphGeoJson(graph.nodes, graph.sources, graph.targets);

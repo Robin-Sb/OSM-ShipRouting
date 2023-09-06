@@ -153,6 +153,28 @@ bool checkIfFileExists(std::string &fileName) {
     return infile.good();
 }
 
+void tn_test(std::shared_ptr<Graph> graph, TransitNodesData &tnData) {
+    TransitNodesQuery tnQuery = TransitNodesQuery(graph, tnData);
+
+    tnQuery.query(3587, 3824);
+    tnQuery.query(4018, 3790);
+    tnQuery.query(2984, 610);
+    // tnQuery.query(1080, 2931);
+    std::random_device rd; // obtain a random number from hardware
+    std::mt19937 gen(rd()); // seed the generator
+    std::uniform_int_distribution<> distr(0, graph->nodes.size()); // define the range
+
+    for(int n=0; n<500; ++n) {
+        int source = distr(gen);
+        int target = distr(gen);
+        int resultTn = tnQuery.query(source, target);
+        int resultDijkstra = graph->dijkstra(source, target).distance;
+        if (resultTn != resultDijkstra) {
+            std::cout << "result wrong for " << source << ", " << target << "\n";
+        }
+    }
+}
+
 void graph_tests(Graph &graph) {
     graph.performDijkstraLogging(Vec2Sphere(-34.016241889667015, -96.50390625000001), Vec2Sphere(-27.68352808378776, -28.652343750000004));
     graph.performDijkstraLogging(Vec2Sphere(32.694865977875075, 161.71875000000003), Vec2Sphere(-28.459033019728057, 80.50781250000001));
@@ -189,9 +211,7 @@ int main() {
     if (!ioCorrect)
         std::cout << "something went wrong when reading/writing transit nodes." << std::endl;
     
-    TransitNodesQuery tnQuery = TransitNodesQuery(graph_ptr, tnrData);
-    tnQuery.query(2763, 6);
-    graph_ptr->dijkstra(6, 2764);
+    tn_test(graph_ptr, tnrData);
     
     std::vector<Vec2Sphere> tNodes; 
     for (int i = 0; i < tnr.transitNodes.size(); i++) {

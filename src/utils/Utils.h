@@ -6,7 +6,7 @@
 #include <numeric>
 
 
-const float pi = 3.14159265359;
+const static float pi = 3.14159265359;
 
 template <typename T, typename Compare>
 std::vector<std::size_t> sort_permutation(

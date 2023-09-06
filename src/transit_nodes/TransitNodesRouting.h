@@ -23,7 +23,7 @@ class TransitNodesRouting {
         void fillBucketsVertical(Vec2 start, Vec2 end, int edgeIndex);
         void fillBucketsHorizontal(Vec2 start, Vec2 end, int edgeIndex);
         //void findBoundaryNodesHorizontal(int xIndex, int yIndex, std::vector<int> &cArray, std::vector<int> &indicesOfCArray, std::vector<std::pair<bool, std::pair<int, RelativePosition>>> &boundaryNodes, int &n_boundaryNodes, RelativePosition relPos);
-        void findBoundaryNodesDirectional(int xIndex, int yIndex, std::vector<NodeDistance> &cArray, std::vector<BoundaryNodeData> &boundaryNodes, int &n_boundaryNodes, std::vector<std::vector<std::vector<int>>> &edgeBuckets, RelativePosition relPos, bool isVertical);
+        void findBoundaryNodesDirectional(int xIndex, int yIndex, std::vector<NodeDistance> &cArray, std::vector<BoundaryNodeData> &boundaryNodes, int &n_boundaryNodes, std::vector<std::vector<std::vector<int>>> &edgeBuckets, RelativePosition relPos, bool isVertical, std::vector<DistanceData> &nodeDistances, std::unordered_map<int, int>& nodeIdxToMapIdx);
         std::vector<NodeDistance> processSingleNodeVertical(int sweepIndexX, int sweepIndexY, int vIndex, std::vector<DistanceData> &distancesLeft, std::vector<DistanceData> &distancesRight, std::array<std::unordered_map<int, int>, 2>& nodeIdxToMapIdx);
         std::vector<NodeDistance> processSingleNodeHorizontal(int sweepIndexX, int sweepIndexY, int vIndex, std::vector<DistanceData> &distancesDown, std::vector<DistanceData> &distancesUp, std::array<std::unordered_map<int, int>, 2>& nodeIdxToMapIdx);
         

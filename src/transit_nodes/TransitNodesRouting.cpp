@@ -38,7 +38,6 @@ std::vector<Vec2Sphere> TransitNodesRouting::getTransitNodesOfCell(int cellX, in
 
 void TransitNodesRouting::findBoundaryNodesDirectional(int xIndex, int yIndex, std::vector<NodeDistance> &cArray, std::vector<BoundaryNodeData> &boundaryNodes, int &n_boundaryNodes, std::vector<std::vector<std::vector<int>>> &edgeBuckets, RelativePosition relPos, bool isVertical, std::vector<DistanceData> &nodeDistances, std::unordered_map<int, int>& nodeIdxToMapIdx) {
     for (int j = 0; j < edgeBuckets[xIndex][yIndex].size(); j++) {
-        // discard duplicate edges
         int startIndex = graph->sources[edgeBuckets[xIndex][yIndex][j]];
         int endIndex = graph->targets[edgeBuckets[xIndex][yIndex][j]];
         // the edge in the opposite direction was found -> skip this one
@@ -50,6 +49,7 @@ void TransitNodesRouting::findBoundaryNodesDirectional(int xIndex, int yIndex, s
         int startCellY = UtilFunctions::getCellY(graph->nodes[startIndex], gridsize);
         int endCellX = UtilFunctions::getCellX(graph->nodes[endIndex], gridsize);
         int endCellY = UtilFunctions::getCellY(graph->nodes[endIndex], gridsize);
+        // always use the node which is outside of the cell, s.t. a dijkstra run settles all nodes in the cells
         if (isVertical) {
             if (relPos == RelativePosition::RIGHTUPPER)
                 nodeIndex = startCellX > endCellX ? startIndex : endIndex;
@@ -60,14 +60,7 @@ void TransitNodesRouting::findBoundaryNodesDirectional(int xIndex, int yIndex, s
                 nodeIndex = startCellY > endCellY ? startIndex : endIndex;
             else 
                 nodeIndex = startCellY < endCellY ? startIndex : endIndex;
-        }
-        // TODO: actually take the node outside of the cell, so that every node inside the cells is included
-        // if (graph->nodes[endIndex].lon < graph->nodes[startIndex].lon)
-        //     nodeIndex = endIndex;
-        
-        // always taking the first node here means sometimes the edge is included and sometimes it isn't
-        // I am not sure what the correct thing to do is here
-        // actually shouldn't matter because in each shortest path the node edge will be included i guess
+        }        
         if (nodeIdxToMapIdx.find(nodeIndex) == nodeIdxToMapIdx.end()) {
             std::unordered_map<int, int> distanceData;
             nodeIdxToMapIdx[nodeIndex] = nodeDistances.size();
@@ -87,42 +80,8 @@ void TransitNodesRouting::storeDistances(int cellIndexX, int CellIndexY, int vIn
 
         mapIndex = nodeToIdxMap.find(nodeIndex)->second;
         distances[mapIndex].distanceToV.insert(std::make_pair(vIndex, cArray[j].distanceToV));
-
-        // if (nodeToIdxMap.find(nodeIndex) == nodeToIdxMap.end()) {
-        //     int transformedCellIndexX = cellIndexX;
-        //     int transformedCellIndexY = CellIndexY;            
-        //     mapIndex = distances.size();
-        //     nodeToIdxMap[nodeIndex] = mapIndex;
-        //     std::unordered_map<int, int> distanceData;
-        //     distanceData[vIndex] = cArray[j].distanceToV;
-        //     DistanceData newNodeEntry = DistanceData(nodeIndex, distanceData, Vec2(transformedCellIndexX, transformedCellIndexY));
-        //     distances.push_back(newNodeEntry);
-        // }
-        // else {
-        //     mapIndex = nodeToIdxMap.find(nodeIndex)->second;
-        //     distances[mapIndex].distanceToV.insert(std::make_pair(vIndex, cArray[j].distanceToV));
-        // }
     }
 }
-
-bool TransitNodesRouting::compareCoordinates(DistanceData &value1, DistanceData &value2, bool sortByY) {
-    Vec2Sphere pos1 = graph->nodes[value1.referenceNodeIndex];
-    Vec2Sphere pos2 = graph->nodes[value2.referenceNodeIndex];
-    if (sortByY)
-        return pos1.lat > pos2.lat;
-    else
-        return pos1.lon > pos2.lon;
-}
-
-// void TransitNodesRouting::findBoundaryNodes() {
-//     // special case caught due to minY and maxY
-//     int yIndex = sweepIndexY + i;
-//     // wraparound incase x becomes negative
-//     int xIndexL = (sweepIndexX + cell - 3 + gridsize) % gridsize;
-//     int xIndexR = (sweepIndexX + cell + 2) % gridsize; 
-//     findBoundaryNodesDirectional(xIndexL, yIndex, cLeft, boundaryNodes, n_boundaryNodes, edgeBucketsVertical, RelativePosition::LEFTLOWER);
-//     findBoundaryNodesDirectional(xIndexR, yIndex, cRight, boundaryNodes, n_boundaryNodes, edgeBucketsVertical, RelativePosition::RIGHTUPPER);
-// }
 
 std::vector<NodeDistance> TransitNodesRouting::processSingleNodeVertical(int sweepIndexX, int sweepIndexY, int vIndex, std::vector<DistanceData> &distancesLeft, std::vector<DistanceData> &distancesRight, std::array<std::unordered_map<int, int>, 2>& nodeIdxToMapIdx)  {    
     std::vector<BoundaryNodeData> boundaryNodes (graph->nodes.size());
@@ -137,7 +96,6 @@ std::vector<NodeDistance> TransitNodesRouting::processSingleNodeVertical(int swe
     
     int n_boundaryNodes = 0;
     for (int i = minY; i <= maxY; i++) {
-        int localIdx = 4 - (i + 2);
         for (int cell = 0; cell < 2; cell++) {
             // special case caught due to minY and maxY
             int yIndex = sweepIndexY + i;
@@ -174,8 +132,8 @@ std::vector<NodeDistance> TransitNodesRouting::processSingleNodeHorizontal(int s
     std::vector<NodeDistance> cUp;
 
     // boundary condition incase we are the edge of the grid 
-    int minY = std::max(0, 2 - sweepIndexY) - 2;
-    int maxY = std::min((gridsize - 1) - sweepIndexY, 2);
+    // int minY = std::max(0, 2 - sweepIndexY) - 2;
+    // int maxY = std::min((gridsize - 1) - sweepIndexY, 2);
     
     int n_boundaryNodes = 0;
     // this only processes the vertical nodes so far -> expand to horizontal
@@ -195,6 +153,7 @@ std::vector<NodeDistance> TransitNodesRouting::processSingleNodeHorizontal(int s
 
     // horizontally, we need to look at 6 (six) cell boundaries
     for (int i = -2; i <= 3; i++) { 
+        // TODO: test other way
         int yIndexU = sweepIndexY + 3;
         int yIndexD = sweepIndexY - 2;
 
@@ -208,13 +167,6 @@ std::vector<NodeDistance> TransitNodesRouting::processSingleNodeHorizontal(int s
     return dijkstraResults;
 }
 
-void TransitNodesRouting::sortDescending(std::vector<DistanceData> &distances, bool sortByY) {
-    std::sort(distances.begin(), distances.end(), 
-    [this, sortByY](DistanceData &value1, DistanceData &value2) {
-        return compareCoordinates(value1, value2, sortByY); 
-    });
-}
-
 // TODO: wraparound antimeridian and pole case
 // TODO: maybe the whole transit nodes search can be refactored into a new class
 TransitNodesData TransitNodesRouting::sweepLineTransitNodesMain() {
@@ -224,71 +176,84 @@ TransitNodesData TransitNodesRouting::sweepLineTransitNodesMain() {
     localTransitNodes = std::vector<std::vector<NodeDistance>> (graph->nodes.size());
     transitNodesOfCells = std::vector<std::vector<std::unordered_set<int>>> (gridsize, std::vector<std::unordered_set<int>> (gridsize));
 
+    std::shared_ptr<std::vector<std::vector<std::vector<int>>>> ebv_ptr = std::make_shared<std::vector<std::vector<std::vector<int>>>>(edgeBucketsVertical);
+    std::shared_ptr<std::vector<std::vector<std::vector<int>>>> ebh_ptr = std::make_shared<std::vector<std::vector<std::vector<int>>>>(edgeBucketsHorizontal);
+
     // first part, find distances from boundary nodes to all potential nodes
     for (int sweepIndexX = 0; sweepIndexX < gridsize; sweepIndexX++) {
-        std::vector<DistanceData> distancesLeft;
-        std::vector<DistanceData> distancesRight;
+        SingleTnPass tnSearchAlgo = SingleTnPass(sweepIndexX, 0, ebv_ptr, ebh_ptr, graph, gridsize, true);
+        tnSearchAlgo.singleSweepLinePass();
+        tnSearchAlgo.findTransitNodes(transitNodesOfCells, transitNodeTmp);
+        tnSearchAlgo.assignDistances(transitNodeTmp, transitNodesOfCells, localTransitNodes);
 
-        std::unordered_set<int> vs;
-        std::unordered_map<int, std::vector<NodeDistance>> distancesToNearestTransitNode;
-        std::array<std::unordered_map<int, int>, 2> nodeIdxToMapIdxVertical;
-        // maps the absolute node index to the node index in the distances array
-        // we need two maps since edges can span over multiple cells (near the poles)
-        for (int sweepIndexY = 0; sweepIndexY < gridsize; sweepIndexY++) {
-            std::array<std::unordered_map<int, int>, 2> nodeIdxToMapIdxHorizontal;
-            // process nodes which cross a vertical grid line
-            for (int edgeIndex = 0; edgeIndex < edgeBucketsVertical[sweepIndexX][sweepIndexY].size(); edgeIndex++) {
-                // just always use the source idk know actually 
-                int vIndex = graph->sources[edgeBucketsVertical[sweepIndexX][sweepIndexY][edgeIndex]];
-                if (vs.find(vIndex) != vs.end())
-                    continue;
+        // std::vector<DistanceData> distancesLeft;
+        // std::vector<DistanceData> distancesRight;
+        
+
+        // std::unordered_set<int> vs;
+        // std::unordered_map<int, std::vector<NodeDistance>> distancesToNearestTransitNode;
+        // std::array<std::unordered_map<int, int>, 2> nodeIdxToMapIdxVertical;
+        // for (int sweepIndexY = 0; sweepIndexY < gridsize; sweepIndexY++) {
+        //     // process nodes which cross a vertical grid line
+        //     for (int edgeIndex = 0; edgeIndex < edgeBucketsVertical[sweepIndexX][sweepIndexY].size(); edgeIndex++) {
+        //         // just always use the source idk know actually 
+        //         int vIndex = graph->sources[edgeBucketsVertical[sweepIndexX][sweepIndexY][edgeIndex]];
+        //         if (vs.find(vIndex) != vs.end())
+        //             continue;
                 
-                if (vIndex == 1039)
-                    int x = 3;
-                std::vector<NodeDistance> dijkstraResults = processSingleNodeVertical(sweepIndexX, sweepIndexY, vIndex, distancesLeft, distancesRight, nodeIdxToMapIdxVertical);
-                distancesToNearestTransitNode[vIndex] = dijkstraResults;
-                vs.insert(vIndex);
-            }
-        }
-        findTransitNodes(distancesLeft, distancesRight, vs, distancesToNearestTransitNode, sweepIndexX, true);
+        //         if (vIndex == 1039)
+        //             int x = 3;
+        //         std::vector<NodeDistance> dijkstraResults = processSingleNodeVertical(sweepIndexX, sweepIndexY, vIndex, distancesLeft, distancesRight, nodeIdxToMapIdxVertical);
+        //         distancesToNearestTransitNode[vIndex] = dijkstraResults;
+        //         vs.insert(vIndex);
+        //     }
+        // }
+        // findTransitNodes(distancesLeft, distancesRight, vs, distancesToNearestTransitNode, sweepIndexX, true);
     }
-
-    // TODO: this one takes ages, find out why
-    // TODO2: transit nodes are added multiple times, maybe use a map again for this
 
     for (int sweepIndexY = 0; sweepIndexY < gridsize; sweepIndexY++) {
-        std::vector<DistanceData> distancesDown;
-        std::vector<DistanceData> distancesUp;
+        SingleTnPass tnSearchAlgo = SingleTnPass(0, sweepIndexY, ebh_ptr, ebv_ptr, graph, gridsize, false);
+        tnSearchAlgo.singleSweepLinePass();
+        tnSearchAlgo.findTransitNodes(transitNodesOfCells, transitNodeTmp);
+        tnSearchAlgo.assignDistances(transitNodeTmp, transitNodesOfCells, localTransitNodes);
 
-        std::unordered_set<int> vs;
-        std::unordered_map<int, std::vector<NodeDistance>> distancesToNearestTransitNode;
+        // std::vector<DistanceData> distancesDown;
+        // std::vector<DistanceData> distancesUp;
 
-        std::array<std::unordered_map<int, int>, 2> nodeIdxToMapIdxVertical;
+        // std::unordered_set<int> vs;
+        // std::unordered_map<int, std::vector<NodeDistance>> distancesToNearestTransitNode;
 
-        for (int sweepIndexX = 0; sweepIndexX < gridsize; sweepIndexX++) {
-            for (int edgeIndex = 0; edgeIndex < edgeBucketsHorizontal[sweepIndexX][sweepIndexY].size(); edgeIndex++) {
-                int vIndex = graph->sources[edgeBucketsHorizontal[sweepIndexX][sweepIndexY][edgeIndex]];
-                if (vs.find(vIndex) != vs.end())
-                    continue;
-                std::vector<NodeDistance> dijkstraResults = processSingleNodeHorizontal(sweepIndexX, sweepIndexY, vIndex, distancesDown, distancesUp, nodeIdxToMapIdxVertical);
-                distancesToNearestTransitNode[vIndex] = dijkstraResults;
-                vs.insert(vIndex);
-            }
-        }
-        findTransitNodes(distancesDown, distancesUp, vs, distancesToNearestTransitNode, sweepIndexY, false);
+        // std::array<std::unordered_map<int, int>, 2> nodeIdxToMapIdxVertical;
+
+        // for (int sweepIndexX = 0; sweepIndexX < gridsize; sweepIndexX++) {
+        //     for (int edgeIndex = 0; edgeIndex < edgeBucketsHorizontal[sweepIndexX][sweepIndexY].size(); edgeIndex++) {
+        //         int vIndex = graph->sources[edgeBucketsHorizontal[sweepIndexX][sweepIndexY][edgeIndex]];
+        //         if (vs.find(vIndex) != vs.end())
+        //             continue;
+        //         std::vector<NodeDistance> dijkstraResults = processSingleNodeHorizontal(sweepIndexX, sweepIndexY, vIndex, distancesDown, distancesUp, nodeIdxToMapIdxVertical);
+        //         distancesToNearestTransitNode[vIndex] = dijkstraResults;
+        //         vs.insert(vIndex);
+        //     }
+        // }
+        // findTransitNodes(distancesDown, distancesUp, vs, distancesToNearestTransitNode, sweepIndexY, false);
     }
-
+    collectTransitNodes();
     computeDistancesBetweenTransitNodes();
     TransitNodesData transitNodesData = postprocessTransitNodes();
     return transitNodesData;
+}
+
+void TransitNodesRouting::collectTransitNodes() {
+    transitNodes = std::vector<int> (transitNodeTmp.size());
+    for (auto& tn : transitNodeTmp) {
+        transitNodes[tn.second] = tn.first;
+    }
 }
 
 void TransitNodesRouting::findTransitNodes(std::vector<DistanceData> &nodesLeft, std::vector<DistanceData> &nodesRight, std::unordered_set<int> &vs, std::unordered_map<int, std::vector<NodeDistance>> &distancesToNearestTransitNode, int sweepIndex, bool vertical) {
     std::unordered_set<int> transitNodesPre;
     for (int i = 0; i < nodesLeft.size(); i++) {
         for (int j = 0; j < nodesRight.size(); j++) {
-            if (i == 10 && j == 98)
-                int t = 5;
             DistanceData vL = nodesLeft[i];
             DistanceData vR = nodesRight[j];
 
@@ -303,7 +268,6 @@ void TransitNodesRouting::findTransitNodes(std::vector<DistanceData> &nodesLeft,
             int minDist = 2000000000;
             int minVIndex = -1;
             for (auto &vIndex : vs) {
-                //int vIndex = vs.find(k).;
                 // node does not exist in one of the tables -> skip
                 if (vL.distanceToV.find(vIndex) == vL.distanceToV.end() ||
                 vR.distanceToV.find(vIndex) == vR.distanceToV.end())

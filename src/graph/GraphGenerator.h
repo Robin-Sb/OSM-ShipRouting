@@ -27,6 +27,7 @@ class GraphGenerator {
         std::vector<int> targets;
         std::vector<int> costs;
         std::vector<Vec2Sphere> nodes;
+        static const int range = 50000;
  
         void generate(int n, std::vector<SingleCoast> &coastlines, float minLat, float maxLat, float minLon, float maxLon);
         // void generate(int n, std::vector<SingleCoast> &coastlines);

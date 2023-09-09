@@ -141,7 +141,7 @@ void GraphGenerator::addNodeConcurrent(std::vector<Vec2Sphere> &allNodes, int ra
 
 void GraphGenerator::findEdgeConcurrent(std::vector<Vec2Sphere> &allNodes, int startIndex, int endIndex, SphericalGrid &grid,  std::shared_ptr<std::vector<Edge>> _edges) {
     for (int i = startIndex; i < endIndex; i++) {
-        FoundNodes closestPoints = grid.findClosestPoints(allNodes[i], 30000);
+        FoundNodes closestPoints = grid.findClosestPoints(allNodes[i], range);
         if (closestPoints.leftBottom.index != -1) {
             _edges->push_back(Edge(i, closestPoints.leftBottom.index, std::floor(closestPoints.leftBottom.dist)));
             _edges->push_back(Edge(closestPoints.leftBottom.index, i, std::floor(closestPoints.leftBottom.dist)));

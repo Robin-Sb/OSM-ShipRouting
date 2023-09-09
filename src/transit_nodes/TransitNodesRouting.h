@@ -5,6 +5,7 @@
 #include <unordered_set>
 #include "TransitNodesDef.h"
 #include "../graph/Graph.h"
+#include "SingleTnPass.h"
 
 class TransitNodesRouting {
     public:
@@ -35,10 +36,8 @@ class TransitNodesRouting {
         void computeDistancesBetweenTransitNodes(); 
         TransitNodesData postprocessTransitNodes();
         std::vector<int> dijkstraSSSP(int source);
-        // those two functions are currently unused, delete later
-        void sortDescending(std::vector<DistanceData> &distances, bool sortByY);
-        bool compareCoordinates(DistanceData &value1, DistanceData &value2, bool sortByY);
 
+        void collectTransitNodes();
         int gridsize;
         std::shared_ptr<Graph> graph;
         std::vector<std::vector<std::vector<int>>> edgeBucketsVertical;

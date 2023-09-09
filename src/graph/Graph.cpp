@@ -199,5 +199,5 @@ void Graph::generate(int n, std::vector<SingleCoast> &coastlines, float minLat, 
 }
 
 void Graph::generate(int n, std::vector<SingleCoast> &coastlines) {
-    generate(n, coastlines);
+    generate(n, coastlines, -90, 90, -180, 180);
 }

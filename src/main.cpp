@@ -25,7 +25,7 @@ using location_handler_type = osmium::handler::NodeLocationsForWays<index_type>;
 void generate_graph(Graph &graph, int amount, std::string &filename) {
     auto otypes = osmium::osm_entity_bits::node | osmium::osm_entity_bits::way;
     //osmium::io::File input_file{"../files/planet-coastlinespbf-cleanedosm.pbf"};
-    osmium::io::File input_file{"../files/antarctica-latest.osm.pbf"};
+    osmium::io::File input_file{"../files/planet-coastlinespbf-cleanedosm.pbf"};
     osmium::io::Reader reader{input_file, otypes};
     
     index_type index;
@@ -35,11 +35,13 @@ void generate_graph(Graph &graph, int amount, std::string &filename) {
     reader.close();
     CoastlineStitcher stitcher = CoastlineStitcher(handler.coastlines);
     std::vector<SingleCoast> coastlines = stitcher.stitchCoastlines();
-    graph.generate(amount, coastlines, 30, 35, -55, -45);
+    graph.generate(amount, coastlines);
     std::string graph_fmi = GeoWriter::generateFMI(graph.nodes, graph.sources, graph.targets, graph.costs);
     GeoWriter::writeToDisk(graph_fmi, filename);
 }
 
+
+// function which compares the original (computed) tns with the stored tns
 bool isTheSame(TransitNodesData &tnrdata1, TransitNodesData &tnrdata2) {
     if (tnrdata1.transitNodes.size() != tnrdata2.transitNodes.size())
         return false;
@@ -156,14 +158,14 @@ bool checkIfFileExists(std::string &fileName) {
 void tn_test(std::shared_ptr<Graph> graph, TransitNodesData &tnData) {
     TransitNodesQuery tnQuery = TransitNodesQuery(graph, tnData);
 
-    tnQuery.query(3587, 3824);
-    tnQuery.query(4018, 3790);
-    tnQuery.query(2984, 610);
     // tnQuery.query(1080, 2931);
     std::random_device rd; // obtain a random number from hardware
     std::mt19937 gen(rd()); // seed the generator
     std::uniform_int_distribution<> distr(0, graph->nodes.size()); // define the range
 
+
+    // TODO: every now and then a query is incorrect
+    // check why
     for(int n=0; n<500; ++n) {
         int source = distr(gen);
         int target = distr(gen);
@@ -185,15 +187,14 @@ void graph_tests(Graph &graph) {
 
 int main() {
     Graph graph = Graph();
-    std::string filename = "../files/graph_small_bidir.fmi";
+    std::string filename = "../files/graph_1m_bidir.fmi";
     if (checkIfFileExists(filename)) {
         graph.buildFromFMI(filename);
     } else {
-        generate_graph(graph, 4000000, filename);
+        generate_graph(graph, 1000000, filename);
     }
 
     checkGraphBidirectional(graph);
-
     // graph.trim(30, 35, -55, -45);
     // GeoWriter::generateFMI(graph.nodes, graph.sources, graph.targets, graph.costs, "../files/graph_small_test.fmi");
     //GeoWriter::buildGraphGeoJson(graph.nodes, graph.sources, graph.targets, "../files/tnr_graph_test.json");
@@ -220,8 +221,6 @@ int main() {
     GeoWriter::buildNodesGeoJson(tNodes, "../files/transit_nodes_small.json");
     std::vector<Vec2Sphere> rangeTns = tnr.getTransitNodesOfCell(91, 173);
     GeoWriter::buildNodesGeoJson(rangeTns, "../files/cell_tns.json");
-
-
 
 
     //graph_tests(graph);

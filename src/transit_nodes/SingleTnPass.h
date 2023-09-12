@@ -46,9 +46,9 @@ class SingleTnPass {
         std::vector<NodeDistance> cPositive;
         // contains one entry for every node; indicates whether that node is a cell boundary and must be settled
         std::vector<BoundaryNodeData> boundaryNodes;
+        std::unordered_map<int, std::vector<int>> boundaryEdges;
         int n_boundaryNodes;
 
         std::vector<DistanceData> distancesNegative;
         std::vector<DistanceData> distancesPositive;
-
 };

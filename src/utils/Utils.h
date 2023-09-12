@@ -78,8 +78,11 @@ class Vec2 {
         float y;
         static float projectX(float lon);
         static float projectY(float lat);
+        static float unprojectX(float x);
+        static float unprojectY(float y);
     private:
         static float degToRad(float angleDeg);
+        static float radToDeg(float angleRad);
 };
 
 class UtilFunctions {

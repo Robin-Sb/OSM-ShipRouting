@@ -158,15 +158,11 @@ bool checkIfFileExists(std::string &fileName) {
 void tn_test(std::shared_ptr<Graph> graph, TransitNodesData &tnData) {
     TransitNodesQuery tnQuery = TransitNodesQuery(graph, tnData);
 
-    // tnQuery.query(1080, 2931);
     std::random_device rd; // obtain a random number from hardware
     std::mt19937 gen(rd()); // seed the generator
-    std::uniform_int_distribution<> distr(0, graph->nodes.size()); // define the range
+    std::uniform_int_distribution<> distr(0, graph->nodes.size() - 1); // define the range
 
-
-    // TODO: every now and then a query is incorrect
-    // check why
-    for(int n=0; n<500; ++n) {
+    for(int n=0; n<1000; ++n) {
         int source = distr(gen);
         int target = distr(gen);
         int resultTn = tnQuery.query(source, target);
@@ -175,6 +171,23 @@ void tn_test(std::shared_ptr<Graph> graph, TransitNodesData &tnData) {
             std::cout << "result wrong for " << source << ", " << target << "\n";
         }
     }
+}
+
+void log_grid(int gridsize) {
+    std::vector<std::pair<Vec2Sphere, Vec2Sphere>> grid;
+    for (int x = 0; x < gridsize; x++) {
+        for (int y = 0; y < (gridsize / 2) - 1; y++) {
+            float lon1 = Vec2::unprojectX(static_cast<float>(x) / static_cast<float>(gridsize));
+            float lat1 = Vec2::unprojectY(static_cast<float>(y) / static_cast<float>(gridsize));
+            int x_2 = x + 1 % gridsize;
+            int y_2 = y + 1;
+            float lon2 = Vec2::unprojectX(static_cast<float>(x_2) / static_cast<float>(gridsize));
+            float lat2 = Vec2::unprojectY(static_cast<float>(y_2) / static_cast<float>(gridsize));
+            grid.push_back(std::make_pair(Vec2Sphere(lat1, lon1), Vec2Sphere(lat1, lon2)));
+            grid.push_back(std::make_pair(Vec2Sphere(lat1, lon1), Vec2Sphere(lat2, lon1)));
+        }
+    }
+    GeoWriter::buildGridGeoJson(grid, "../files/grid2.json");;
 }
 
 void graph_tests(Graph &graph) {
@@ -186,16 +199,16 @@ void graph_tests(Graph &graph) {
 }
 
 int main() {
+    log_grid(256);
+    // return 0;
     Graph graph = Graph();
-    std::string filename = "../files/graph_1m_bidir.fmi";
+    std::string filename = "../graphs/graph_antimeridian.fmi";
     if (checkIfFileExists(filename)) {
         graph.buildFromFMI(filename);
     } else {
         generate_graph(graph, 1000000, filename);
     }
-
     checkGraphBidirectional(graph);
-    // graph.trim(30, 35, -55, -45);
     // GeoWriter::generateFMI(graph.nodes, graph.sources, graph.targets, graph.costs, "../files/graph_small_test.fmi");
     //GeoWriter::buildGraphGeoJson(graph.nodes, graph.sources, graph.targets, "../files/tnr_graph_test.json");
 
@@ -219,9 +232,14 @@ int main() {
         tNodes.push_back(graph.nodes[tnr.transitNodes[i]]);
     }
     GeoWriter::buildNodesGeoJson(tNodes, "../files/transit_nodes_small.json");
-    std::vector<Vec2Sphere> rangeTns = tnr.getTransitNodesOfCell(91, 173);
-    GeoWriter::buildNodesGeoJson(rangeTns, "../files/cell_tns.json");
+    std::vector<Vec2Sphere> tn9285 = tnr.getTransitNodesOfCell(92, 85);
+    GeoWriter::buildNodesGeoJson(tn9285, "../files/cell_92_85.json");
 
+    std::vector<Vec2Sphere> tn9491 = tnr.getTransitNodesOfCell(94, 91);
+    GeoWriter::buildNodesGeoJson(tn9491, "../files/cell_94_91.json");
+
+    ResultDTO optPath = graph.dijkstra(86, 1922);
+    GeoWriter::buildPathGeoJson(optPath, "../files/opt86-1922.json");
 
     //graph_tests(graph);
     // std::string graph_json = GeoWriter::buildGraphGeoJson(graph.nodes, graph.sources, graph.targets);

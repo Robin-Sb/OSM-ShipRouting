@@ -17,6 +17,8 @@ void SingleTnPass::singleSweepLinePass() {
         for (int edgeIndex = 0; edgeIndex < edgeBucketsMain->at(sweepIndexX)[sweepIndexY].size(); edgeIndex++) {
             vIndex = graph->sources[edgeBucketsMain->at(sweepIndexX)[sweepIndexY][edgeIndex]];
 
+            if (vIndex == 124 || vIndex == 1346)
+                int x = 3;
             // skip duplicates
             if (vs.find(vIndex) != vs.end())
                 continue;
@@ -24,6 +26,7 @@ void SingleTnPass::singleSweepLinePass() {
             cNegative.clear();
             cPositive.clear();
             boundaryNodes.clear();
+            n_boundaryNodes = 0;
 
             std::vector<NodeDistance> dijkstraResults = processSingleNode(vIndex);
             distancesToNearestTransitNode[vIndex] = dijkstraResults;
@@ -73,8 +76,8 @@ void SingleTnPass::searchVertical(int i, int cell, bool verticalPass) {
 
 void SingleTnPass::searchHorizontal(int i, int cell, bool horizontalPass) {
     // special case caught due to minY and maxY
-    int yIndexPositive = sweepIndexY - cell + 3;
-    int yIndexNegative = sweepIndexY - cell - 2;
+    int yIndexPositive = horizontalPass ? sweepIndexY - cell + 3 : sweepIndexY - cell + 2;
+    int yIndexNegative = horizontalPass ? sweepIndexY - cell - 2 : sweepIndexY - cell - 3;
     // wraparound incase x becomes negative
     int xIndex = (sweepIndexX + i + gridsize) % gridsize;
     std::shared_ptr<std::vector<std::vector<std::vector<int>>>> edgeBuckets = horizontalPass ? edgeBucketsMain : edgeBucketsSecondary;
@@ -85,19 +88,29 @@ void SingleTnPass::searchHorizontal(int i, int cell, bool horizontalPass) {
 
 void SingleTnPass::findBoundaryNodesNegative(int xIndex, int yIndex, bool verticalPass, std::shared_ptr<std::vector<std::vector<std::vector<int>>>> edgeBuckets) {
     for (int j = 0; j < edgeBuckets->at(xIndex)[yIndex].size(); j++) {
-        int startIndex = graph->sources[edgeBuckets->at(xIndex)[yIndex][j]];
-        int endIndex = graph->targets[edgeBuckets->at(xIndex)[yIndex][j]];
+        int edgeIndex = edgeBuckets->at(xIndex)[yIndex][j];
+        int startIndex = graph->sources[edgeIndex];
+        int endIndex = graph->targets[edgeIndex];
         // the edge in the opposite direction was found -> skip this one
-        if (boundaryNodes[startIndex].isAtCellBoundary || boundaryNodes[endIndex].isAtCellBoundary)
+        if (boundaryNodes[startIndex].isAtCellBoundary) {
+            boundaryNodes[startIndex].edges.push_back(edgeIndex);
             continue;
+        } 
+        if (boundaryNodes[endIndex].isAtCellBoundary) {
+            boundaryNodes[endIndex].edges.push_back(edgeIndex);
+            continue;
+        }
+        //|| boundaryNodes[endIndex].isAtCellBoundary)
+        //    continue;
         // order nodes by their x/y coordinate and take the far away node (because then all nodes within cell will be setlled)
-        int nodeIndex = orderNodes(startIndex, endIndex, verticalPass).second;
+        int nodeIndex = std::min(startIndex, endIndex); // orderNodes(startIndex, endIndex, verticalPass).second;
         if (nodeIdxToMapIdxNegative.find(nodeIndex) == nodeIdxToMapIdxNegative.end()) {
             std::unordered_map<int, int> distanceData;
             nodeIdxToMapIdxNegative[nodeIndex] = distancesNegative.size();
             distancesNegative.push_back(DistanceData(nodeIndex, distanceData, Vec2(xIndex, yIndex)));
         }
-        boundaryNodes[nodeIndex] = BoundaryNodeData(true, cNegative.size(), RelativePosition::LEFTLOWER);
+        boundaryNodes[nodeIndex] = BoundaryNodeData(true, cNegative.size(), RelativePosition::NEGATIVE);
+        boundaryEdges.insert(std::pair<int, std::vector<int>>(nodeIndex, std::vector<int> {edgeIndex}));
         cNegative.push_back(NodeDistance(nodeIndex, 0));
         n_boundaryNodes++;
     }
@@ -105,19 +118,28 @@ void SingleTnPass::findBoundaryNodesNegative(int xIndex, int yIndex, bool vertic
 
 void SingleTnPass::findBoundaryNodesPositive(int xIndex, int yIndex, bool verticalPass, std::shared_ptr<std::vector<std::vector<std::vector<int>>>> edgeBuckets) {
     for (int j = 0; j < edgeBuckets->at(xIndex)[yIndex].size(); j++) {
-        int startIndex = graph->sources[edgeBuckets->at(xIndex)[yIndex][j]];
-        int endIndex = graph->targets[edgeBuckets->at(xIndex)[yIndex][j]];
-        // the edge in the opposite direction was found -> skip this one
-        if (boundaryNodes[startIndex].isAtCellBoundary || boundaryNodes[endIndex].isAtCellBoundary)
+        int edgeIndex = edgeBuckets->at(xIndex)[yIndex][j];
+        int startIndex = graph->sources[edgeIndex];
+        int endIndex = graph->targets[edgeIndex];
+        // another edge with same node on cell boundary -> add to edges
+        if (boundaryNodes[startIndex].isAtCellBoundary) {
+            boundaryEdges.at(startIndex).push_back(edgeIndex);
             continue;
+        } 
+        if (boundaryNodes[endIndex].isAtCellBoundary) {
+            boundaryEdges.at(endIndex).push_back(edgeIndex);
+            continue;
+        }
         // order nodes by their x/y coordinate and take the far away node (because then all nodes within cell will be setlled)
-        int nodeIndex = orderNodes(startIndex, endIndex, verticalPass).second;
+        int nodeIndex = std::min(startIndex, endIndex); //orderNodes(startIndex, endIndex, verticalPass).second;
         if (nodeIdxToMapIdxPositive.find(nodeIndex) == nodeIdxToMapIdxPositive.end()) {
             std::unordered_map<int, int> distanceData;
             nodeIdxToMapIdxPositive[nodeIndex] = distancesPositive.size();
             distancesPositive.push_back(DistanceData(nodeIndex, distanceData, Vec2(xIndex, yIndex)));
         }
-        boundaryNodes[nodeIndex] = BoundaryNodeData(true, cPositive.size(), RelativePosition::RIGHTUPPER);
+        boundaryNodes[nodeIndex] = BoundaryNodeData(true, cPositive.size(), RelativePosition::POSITIVE);
+        boundaryEdges.insert(std::pair<int, std::vector<int>>(nodeIndex, std::vector<int> {edgeIndex}));
+        //boundaryEdges.at(nodeIndex).push_back(edgeIndex);
         cPositive.push_back(NodeDistance(nodeIndex, 0));
         n_boundaryNodes++;
     }
@@ -181,9 +203,9 @@ std::vector<NodeDistance> SingleTnPass::dijkstra() {
             break;
         if (boundaryNodes[u].isAtCellBoundary) {
             counter++;
-            if (boundaryNodes[u].relPos == RelativePosition::LEFTLOWER)
+            if (boundaryNodes[u].relPos == RelativePosition::NEGATIVE)
                 cNegative[boundaryNodes[u].localIndex].distanceToV = dist[u];
-            else if (boundaryNodes[u].relPos == RelativePosition::RIGHTUPPER)
+            else if (boundaryNodes[u].relPos == RelativePosition::POSITIVE)
                 cPositive[boundaryNodes[u].localIndex].distanceToV = dist[u]; 
             boundaryNodes[u].isAtCellBoundary = false;
         }
@@ -212,7 +234,7 @@ void SingleTnPass::findTransitNodes(std::vector<std::vector<std::unordered_set<i
         for (int j = 0; j < distancesPositive.size(); j++) {
             DistanceData vL = distancesNegative[i];
             DistanceData vR = distancesPositive[j];
-            auto getCell = vertical ? UtilFunctions::getCellY : UtilFunctions::getCellX;
+            
             int gridCellNegative = vertical ? vL.cell.y : vL.cell.x; //getCell(graph->nodes[vL.referenceNodeIndex], gridsize);
             int gridCellPositive = vertical ? vR.cell.y : vR.cell.x; //getCell(graph->nodes[vR.referenceNodeIndex], gridsize);
 
@@ -237,7 +259,6 @@ void SingleTnPass::findTransitNodes(std::vector<std::vector<std::unordered_set<i
             // no transit node found -> skip
             if (minVIndex == -1) 
                 continue;
-            
 
             int transitNodeId; 
             // if transit node was not found yet, append it
@@ -249,14 +270,42 @@ void SingleTnPass::findTransitNodes(std::vector<std::vector<std::unordered_set<i
             else {
                 transitNodeId = transitNodeTmp.at(minVIndex);
             }
+            auto getCell = vertical ? UtilFunctions::getCellY : UtilFunctions::getCellX;
 
-            if (vertical) {
-                transitNodesOfCells[sweepIndexX - 3][gridCellNegative].insert(transitNodeId);
-                transitNodesOfCells[sweepIndexX + 2][gridCellPositive].insert(transitNodeId);
-            } else {
-                transitNodesOfCells[gridCellNegative][sweepIndexY - 3].insert(transitNodeId);
-                transitNodesOfCells[gridCellPositive][sweepIndexY + 2].insert(transitNodeId);
+            for (int k = 0; k < boundaryEdges.at(vL.referenceNodeIndex).size(); k++) {
+                int sourceNeg = graph->sources[boundaryEdges.at(vL.referenceNodeIndex)[k]];
+                int targetNeg = graph->targets[boundaryEdges.at(vL.referenceNodeIndex)[k]];
+                int srcCellXNeg = getCell(graph->nodes[sourceNeg], gridsize);
+                int trgCellXNeg = getCell(graph->nodes[targetNeg], gridsize);
+                if (vertical) {
+                    transitNodesOfCells[(sweepIndexX - 3 + gridsize) % gridsize][getCell(graph->nodes[sourceNeg], gridsize)].insert(transitNodeId);
+                    transitNodesOfCells[(sweepIndexX - 3 + gridsize) % gridsize][getCell(graph->nodes[targetNeg], gridsize)].insert(transitNodeId);
+                } else {
+                    transitNodesOfCells[getCell(graph->nodes[sourceNeg], gridsize)][(sweepIndexY - 3 + gridsize) % gridsize].insert(transitNodeId);
+                    transitNodesOfCells[getCell(graph->nodes[targetNeg], gridsize)][(sweepIndexY - 3 + gridsize) % gridsize].insert(transitNodeId);
+                }
             }
+
+            for (int k = 0; k < boundaryEdges.at(vR.referenceNodeIndex).size(); k++) {
+                int sourcePos = graph->sources[boundaryEdges.at(vR.referenceNodeIndex)[k]];
+                int targetPos = graph->targets[boundaryEdges.at(vR.referenceNodeIndex)[k]];
+                int srcCellXPos = getCell(graph->nodes[sourcePos], gridsize);
+                int trgCellXPos = getCell(graph->nodes[targetPos], gridsize);
+                if (vertical) {
+                    transitNodesOfCells[(sweepIndexX + 2) % gridsize][getCell(graph->nodes[sourcePos], gridsize)].insert(transitNodeId);
+                    transitNodesOfCells[(sweepIndexX + 2) % gridsize][getCell(graph->nodes[targetPos], gridsize)].insert(transitNodeId);
+                } else {
+                    transitNodesOfCells[getCell(graph->nodes[sourcePos], gridsize)][(sweepIndexY + 2) % gridsize].insert(transitNodeId);
+                    transitNodesOfCells[getCell(graph->nodes[targetPos], gridsize)][(sweepIndexY + 2) % gridsize].insert(transitNodeId);
+                }
+            }
+            // if (vertical) {
+            //     transitNodesOfCells[(sweepIndexX - 3 + gridsize) % gridsize][gridCellNegative].insert(transitNodeId);
+            //     transitNodesOfCells[(sweepIndexX + 2) % gridsize][gridCellPositive].insert(transitNodeId);
+            // } else {
+            //     transitNodesOfCells[gridCellNegative][(sweepIndexY - 3 + gridsize) % gridsize].insert(transitNodeId);
+            //     transitNodesOfCells[gridCellPositive][(sweepIndexY + 2) % gridsize].insert(transitNodeId);
+            // }
 
         }
     }

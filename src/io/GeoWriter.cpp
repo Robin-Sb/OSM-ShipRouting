@@ -55,7 +55,7 @@ std::string GeoWriter::buildPathGeoJson(ResultDTO &result) {
     std::vector<Vec2Sphere> &path = result.path;
     std::string out = "{"
     "   \"type\": \"Feature\",\n"
-    "   \"properties\": {},\n"
+    "   \"properties\": {\"stroke\": \"#DD0000\"},\n"
     "   \"geometry\": {\n"
     "       \"type\": \"LineString\",\n"
     "       \"coordinates\": [\n";
@@ -140,6 +140,24 @@ std::string GeoWriter::buildGraphGeoJson(std::vector<Vec2Sphere> &nodes, std::ve
     return out;
 }
 
+std::string GeoWriter::buildGridGeoJson(std::vector<std::pair<Vec2Sphere, Vec2Sphere>> grid) {
+    std::string out = "{\"type\": \"FeatureCollection\",\n"
+    "\"features\":[ \n";
+    for (int i = 0; i < grid.size(); i++) {
+        out += "{\"type\": \"Feature\",\n";
+        out += "\"properties\": {\"stroke\": \"#00DD00\"},\n";
+        out += "\"geometry\": {\"type\": \"LineString\",\n";
+        out += "\"coordinates\": [\n";
+        out += "[" + std::to_string(grid[i].first.lon) + ", " + std::to_string(grid[i].first.lat) + "], \n";
+        out += "[" + std::to_string(grid[i].second.lon) + ", " + std::to_string(grid[i].second.lat) + "] \n";
+        out += "]}}";
+        if (i < grid.size() - 1) 
+            out += ",";
+    }
+    out += "]}";
+    return out;
+}
+
 std::string GeoWriter::buildNodesAsEdges(std::vector<Vec2Sphere> nodes) {
     std::string out = "{\"type\": \"FeatureCollection\",\n"
     "\"features\":[ \n";
@@ -156,6 +174,11 @@ std::string GeoWriter::buildNodesAsEdges(std::vector<Vec2Sphere> nodes) {
     }
     out += "]}";
     return out;
+}
+
+void GeoWriter::buildGridGeoJson(std::vector<std::pair<Vec2Sphere, Vec2Sphere>> grid, std::string filename) {
+    std::string content = buildGridGeoJson(grid);
+    writeToDisk(content, filename);
 }
 
 void GeoWriter::buildNodesAsEdges(std::vector<Vec2Sphere> nodes, std::string filename) {

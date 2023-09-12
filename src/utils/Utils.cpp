@@ -49,6 +49,18 @@ float Vec2::degToRad(float angleDeg) {
     return angleDeg * (pi / 180.0);
 }
 
+float Vec2::radToDeg(float angleRad) {
+    return angleRad * (180.0 / pi);
+}
+
+float Vec2::unprojectX(float x) {
+    return radToDeg((x * 2 * pi) - pi);
+}
+
+float Vec2::unprojectY(float y) {
+    return radToDeg((y * 2 * pi) - (pi / 2));
+}
+
 float Vec2::projectX(float lon) {
     lon = Vec2::degToRad(lon);
     return ((lon - 0) * std::cos(0) + pi) / (2 * pi);
@@ -56,9 +68,8 @@ float Vec2::projectX(float lon) {
 
 float Vec2::projectY(float lat) {
     lat = Vec2::degToRad(lat);
-    return ((lat - 0) + (pi / 2)) / pi;
+    return ((lat - 0) + (pi / 2)) / (2 * pi);
 }
-
 
 bool UtilFunctions::sameCell(Vec2Sphere &v1, Vec2Sphere &v2, int gridsize) {
     if (getCellX(v1, gridsize) == getCellX(v2, gridsize) &&

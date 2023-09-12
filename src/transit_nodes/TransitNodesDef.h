@@ -4,8 +4,8 @@
 #include "../utils/Utils.h"
 
 enum RelativePosition {
-    LEFTLOWER,
-    RIGHTUPPER,
+    NEGATIVE,
+    POSITIVE,
     UNDEF
 };
 
@@ -40,6 +40,7 @@ struct BoundaryNodeData {
         localIndex = _localIndex;
         relPos = _relPos;
     }
+    std::vector<int> edges;
     bool isAtCellBoundary;
     int localIndex;
     RelativePosition relPos;

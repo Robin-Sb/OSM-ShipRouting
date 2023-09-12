@@ -17,7 +17,7 @@ void SingleTnPass::singleSweepLinePass() {
         for (int edgeIndex = 0; edgeIndex < edgeBucketsMain->at(sweepIndexX)[sweepIndexY].size(); edgeIndex++) {
             vIndex = graph->sources[edgeBucketsMain->at(sweepIndexX)[sweepIndexY][edgeIndex]];
 
-            if (vIndex == 124 || vIndex == 1346)
+            if (vIndex == 1053 || vIndex == 358)
                 int x = 3;
             // skip duplicates
             if (vs.find(vIndex) != vs.end())
@@ -239,7 +239,8 @@ void SingleTnPass::findTransitNodes(std::vector<std::vector<std::unordered_set<i
             int gridCellPositive = vertical ? vR.cell.y : vR.cell.x; //getCell(graph->nodes[vR.referenceNodeIndex], gridsize);
 
             // if distance bigger than 4 gridcells, skip
-            if (std::abs(gridCellNegative - gridCellPositive) > 4)
+            // second part is antimeridian case
+            if (std::abs(gridCellNegative - gridCellPositive) > 4 && (std::min(gridCellNegative, gridCellPositive) + gridsize) - std::max(gridCellNegative, gridCellPositive) > 4)
                 continue;
 
             int minDist = 2000000000;

@@ -98,10 +98,10 @@ std::string GeoWriter::buildGraphGeoJson(std::vector<Vec2Sphere> &nodes, std::ve
     for (int i = startIndex; i < endIndex; i++) {
         float tLonSrc = nodes[sources[i]].lon;
         float tLonTrg = nodes[targets[i]].lon;
-        // if (nodes[sources[i]].lon < -175 && nodes[targets[i]].lon > 175) 
-        //     tLonSrc = 180 + (180 + nodes[sources[i]].lon);
-        // if (nodes[sources[i]].lon > 175 && nodes[targets[i]].lon < -175)
-        //     tLonTrg = 180 + (180 + nodes[targets[i]].lon);
+        if (nodes[sources[i]].lon < -175 && nodes[targets[i]].lon > 175) 
+            tLonSrc = 180 + (180 + nodes[sources[i]].lon);
+        if (nodes[sources[i]].lon > 175 && nodes[targets[i]].lon < -175)
+            tLonTrg = 180 + (180 + nodes[targets[i]].lon);
 
         // if (nodes[sources[i]].lat < 50 || nodes[sources[i]].lat > 60)
         //     continue;

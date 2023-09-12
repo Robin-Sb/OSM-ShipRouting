@@ -158,6 +158,7 @@ bool checkIfFileExists(std::string &fileName) {
 void tn_test(std::shared_ptr<Graph> graph, TransitNodesData &tnData) {
     TransitNodesQuery tnQuery = TransitNodesQuery(graph, tnData);
 
+    tnQuery.query(219, 1479);
     std::random_device rd; // obtain a random number from hardware
     std::mt19937 gen(rd()); // seed the generator
     std::uniform_int_distribution<> distr(0, graph->nodes.size() - 1); // define the range
@@ -210,7 +211,7 @@ int main() {
     }
     checkGraphBidirectional(graph);
     // GeoWriter::generateFMI(graph.nodes, graph.sources, graph.targets, graph.costs, "../files/graph_small_test.fmi");
-    //GeoWriter::buildGraphGeoJson(graph.nodes, graph.sources, graph.targets, "../files/tnr_graph_test.json");
+    GeoWriter::buildGraphGeoJson(graph.nodes, graph.sources, graph.targets, "../files/tnr_antimeridian.json");
 
     std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
     TransitNodesRouting tnr = TransitNodesRouting(graph_ptr, 256);
@@ -232,14 +233,14 @@ int main() {
         tNodes.push_back(graph.nodes[tnr.transitNodes[i]]);
     }
     GeoWriter::buildNodesGeoJson(tNodes, "../files/transit_nodes_small.json");
-    std::vector<Vec2Sphere> tn9285 = tnr.getTransitNodesOfCell(92, 85);
-    GeoWriter::buildNodesGeoJson(tn9285, "../files/cell_92_85.json");
+    std::vector<Vec2Sphere> tnssrc = tnr.getTransitNodesOfCell(253, 61);
+    GeoWriter::buildNodesGeoJson(tnssrc, "../files/cell_253_62.json");
 
-    std::vector<Vec2Sphere> tn9491 = tnr.getTransitNodesOfCell(94, 91);
-    GeoWriter::buildNodesGeoJson(tn9491, "../files/cell_94_91.json");
+    std::vector<Vec2Sphere> tnstrg = tnr.getTransitNodesOfCell(1, 66);
+    GeoWriter::buildNodesGeoJson(tnstrg, "../files/cell_2_64.json");
 
-    ResultDTO optPath = graph.dijkstra(86, 1922);
-    GeoWriter::buildPathGeoJson(optPath, "../files/opt86-1922.json");
+    ResultDTO optPath = graph.dijkstra(166, 1459);
+    GeoWriter::buildPathGeoJson(optPath, "../files/opt166-1459.json");
 
     //graph_tests(graph);
     // std::string graph_json = GeoWriter::buildGraphGeoJson(graph.nodes, graph.sources, graph.targets);

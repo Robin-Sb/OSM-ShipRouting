@@ -10,11 +10,6 @@ int TransitNodesQuery::query(int source, int target) {
     int trgCellX = UtilFunctions::getCellX(graph->nodes[target], tnData.gridsize_x);
     int srcCellY = UtilFunctions::getCellY(graph->nodes[source], tnData.gridsize_y);
     int trgCellY = UtilFunctions::getCellY(graph->nodes[target], tnData.gridsize_y);
-    // testing, remove later
-    float srcX = Vec2::projectX(graph->nodes[source].lon);
-    float trgX = Vec2::projectX(graph->nodes[target].lon);
-    float srcY = Vec2::projectY(graph->nodes[source].lat);
-    float trgY = Vec2::projectY(graph->nodes[target].lat);
     if ((std::abs(trgCellX - srcCellX) <= 4 || std::abs(trgCellX - srcCellX) >= tnData.gridsize_x - 4) && std::abs(trgCellY - srcCellY) <= 4)
         return graph->dijkstra(source, target).distance;
 

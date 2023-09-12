@@ -206,7 +206,7 @@ int main() {
     log_grid(256);
     // return 0;
     Graph graph = Graph();
-    std::string filename = "../graphs/graph_antimeridian.fmi";
+    std::string filename = "../graphs/graph.fmi";
     if (checkIfFileExists(filename)) {
         graph.buildFromFMI(filename);
     } else {
@@ -214,16 +214,16 @@ int main() {
     }
     checkGraphBidirectional(graph);
     // GeoWriter::generateFMI(graph.nodes, graph.sources, graph.targets, graph.costs, "../files/graph_small_test.fmi");
-    GeoWriter::buildGraphGeoJson(graph.nodes, graph.sources, graph.targets, "../files/tnr_antimeridian.json");
+    // GeoWriter::buildGraphGeoJson(graph.nodes, graph.sources, graph.targets, "../files/tnr_antimeridian.json");
 
     std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
     TransitNodesRouting tnr = TransitNodesRouting(graph_ptr, 256);
     tnr.findEdgeBuckets();
-    std::vector<Vec2Sphere> gridNodes = tnr.transformBack();
-    GeoWriter::buildNodesAsEdges(gridNodes, "../files/gridnodes_all.json");
+    // std::vector<Vec2Sphere> gridNodes = tnr.transformBack();
+    // GeoWriter::buildNodesAsEdges(gridNodes, "../files/gridnodes_all.json");
     TransitNodesData tnrData = tnr.sweepLineTransitNodesMain();
 
-    GeoWriter::writeTransitNodes(tnrData, "../shared_files/transit_nodes.tnr");
+    GeoWriter::writeTransitNodes(tnrData, "../files/transit_nodes.tnr");
     TransitNodesData tnrDataNew = GeoWriter::readTransitNodes("../shared_files/transit_nodes.tnr");
     bool ioCorrect = isTheSame(tnrData, tnrDataNew);
     if (!ioCorrect)
@@ -231,22 +231,15 @@ int main() {
     
     tn_test(graph_ptr, tnrData);
     
-    std::vector<Vec2Sphere> tNodes; 
-    for (int i = 0; i < tnr.transitNodes.size(); i++) {
-        tNodes.push_back(graph.nodes[tnr.transitNodes[i]]);
-    }
-    GeoWriter::buildNodesGeoJson(tNodes, "../files/transit_nodes_small.json");
-    std::vector<Vec2Sphere> tnssrc = tnr.getTransitNodesOfCell(253, 61);
-    GeoWriter::buildNodesGeoJson(tnssrc, "../files/cell_253_62.json");
-
-    std::vector<Vec2Sphere> tnstrg = tnr.getTransitNodesOfCell(1, 66);
-    GeoWriter::buildNodesGeoJson(tnstrg, "../files/cell_2_64.json");
-
-    ResultDTO optPath = graph.dijkstra(166, 1459);
-    std::vector<Vec2Sphere> path;
-    for (int i = 0; i < optPath.path.size(); i++) 
-        path.push_back(graph.nodes[optPath.path[i]]);
-    GeoWriter::buildPathGeoJson(path, optPath.distance, "../files/opt166-1459.json");
+    // std::vector<Vec2Sphere> tNodes; 
+    // for (int i = 0; i < tnr.transitNodes.size(); i++) {
+    //     tNodes.push_back(graph.nodes[tnr.transitNodes[i]]);
+    // }
+    // ResultDTO optPath = graph.dijkstra(166, 1459);
+    // std::vector<Vec2Sphere> path;
+    // for (int i = 0; i < optPath.path.size(); i++) 
+    //     path.push_back(graph.nodes[optPath.path[i]]);
+    // GeoWriter::buildPathGeoJson(path, optPath.distance, "../files/opt166-1459.json");
 
     //graph_tests(graph);
     // std::string graph_json = GeoWriter::buildGraphGeoJson(graph.nodes, graph.sources, graph.targets);

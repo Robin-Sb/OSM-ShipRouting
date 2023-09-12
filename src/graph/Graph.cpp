@@ -76,7 +76,7 @@ ResultDTO Graph::performDijkstraLogging(Vec2Sphere startPos, Vec2Sphere endPos) 
     std::chrono::duration<double> elapsed_seconds_search = endNodeSearch-startNodeSearch;
     std::cout << "elapsed time node search: " << elapsed_seconds_search.count() << "s" << std::endl;
 
-    std::vector<Vec2Sphere> nodePath;
+    std::vector<int> nodePath;
     if (startIndex == -1) {
         std::cout << "No adjacent node found. Are you starting from land?" << std::endl;
         return ResultDTO(nodePath, -1);
@@ -143,7 +143,7 @@ ResultDTO Graph::dijkstra(int source, int target) {
         nodePath.push_back(nodes[path[i]]);
     }
 
-    return ResultDTO(nodePath, dist[target]);
+    return ResultDTO(path, dist[target]);
 }
 
 void Graph::readEdges(std::ifstream &file, int m) {

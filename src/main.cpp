@@ -130,7 +130,10 @@ void startServer(Graph & graph) {
             float lon1 = std::stof(query.substr(lon1IdxS, lon1IdxE));
             float lon2 = std::stof(query.substr(lon2IdxS, lon2IdxE));
             ResultDTO result = graph.performDijkstraLogging(Vec2Sphere(lat1, lon1), Vec2Sphere(lat2, lon2));
-            std::string path_json = GeoWriter::buildPathGeoJson(result);
+            std::vector<Vec2Sphere> path;
+            for (int i = 0; i < result.path.size(); i++) 
+                path.push_back(graph.nodes[result.path[i]]);
+            std::string path_json = GeoWriter::buildPathGeoJson(path, result.distance);
             SimpleWeb::CaseInsensitiveMultimap header;
             header.emplace("Access-Control-Allow-Origin", "*");
             response->write(path_json, header);
@@ -240,7 +243,10 @@ int main() {
     GeoWriter::buildNodesGeoJson(tnstrg, "../files/cell_2_64.json");
 
     ResultDTO optPath = graph.dijkstra(166, 1459);
-    GeoWriter::buildPathGeoJson(optPath, "../files/opt166-1459.json");
+    std::vector<Vec2Sphere> path;
+    for (int i = 0; i < optPath.path.size(); i++) 
+        path.push_back(graph.nodes[optPath.path[i]]);
+    GeoWriter::buildPathGeoJson(path, optPath.distance, "../files/opt166-1459.json");
 
     //graph_tests(graph);
     // std::string graph_json = GeoWriter::buildGraphGeoJson(graph.nodes, graph.sources, graph.targets);

@@ -51,8 +51,7 @@ std::string GeoWriter::buildNodesGeoJson(std::vector<Vec2Sphere> &nodes) {
     return out;
 }
 
-std::string GeoWriter::buildPathGeoJson(ResultDTO &result) {
-    std::vector<Vec2Sphere> &path = result.path;
+std::string GeoWriter::buildPathGeoJson(std::vector<Vec2Sphere> &path, int distance) {
     std::string out = "{"
     "   \"type\": \"Feature\",\n"
     "   \"properties\": {\"stroke\": \"#DD0000\"},\n"
@@ -64,7 +63,7 @@ std::string GeoWriter::buildPathGeoJson(ResultDTO &result) {
         if (i != path.size() - 1) 
             out += ",\n";
     }
-    out += "\n]\n}, \"distance\":" + std::to_string(result.distance); 
+    out += "\n]\n}, \"distance\":" + std::to_string(distance); 
     out += "\n}";
     return out;
 }
@@ -201,8 +200,8 @@ void GeoWriter::buildGraphGeoJson(std::vector<Vec2Sphere> &nodes, std::vector<in
     writeToDisk(content, filename);
 
 }
-void GeoWriter::buildPathGeoJson(ResultDTO &path, std::string filename) {
-    std::string content = buildPathGeoJson(path);
+void GeoWriter::buildPathGeoJson(std::vector<Vec2Sphere> &path, int distance, std::string filename) {
+    std::string content = buildPathGeoJson(path, distance);
     writeToDisk(content, filename);
 }
 void GeoWriter::buildLineSegmentsJson(std::vector<Vec2Sphere> lineSegments, std::string filename) {

@@ -5,14 +5,11 @@ TransitNodesQuery::TransitNodesQuery(std::shared_ptr<Graph> _graph, TransitNodes
     tnData = _tnData;
 }
 
-int TransitNodesQuery::query(int source, int target) {
+int TransitNodesQuery::query_alg(int source, int target) {
     int srcCellX = UtilFunctions::getCellX(graph->nodes[source], tnData.gridsize_x);
     int trgCellX = UtilFunctions::getCellX(graph->nodes[target], tnData.gridsize_x);
     int srcCellY = UtilFunctions::getCellY(graph->nodes[source], tnData.gridsize_y);
     int trgCellY = UtilFunctions::getCellY(graph->nodes[target], tnData.gridsize_y);
-    if ((std::abs(trgCellX - srcCellX) <= 4 || std::abs(trgCellX - srcCellX) >= tnData.gridsize_x - 4) && std::abs(trgCellY - srcCellY) <= 4)
-        return graph->dijkstra(source, target).distance;
-
 
     int minDist = 2000000000;
     for (int i = 0; i < tnData.distancesToLocalTransitNodes[source].size(); i++) {
@@ -23,10 +20,75 @@ int TransitNodesQuery::query(int source, int target) {
             int trgTn = tnData.transitNodesPerCell[trgCellX][trgCellY][j];
             int distBetweenTn = tnData.distancesBetweenTransitNodes[srcTn][trgTn];
             int dist = srcToTnDist + trgToTnDist + distBetweenTn;
-            // if (srcToTnDist != graph->dijkstra(tnData.transitNodes[srcTn], source).distance || trgToTnDist != graph->dijkstra(target, tnData.transitNodes[trgTn]).distance || graph->dijkstra(tnData.transitNodes[srcTn], tnData.transitNodes[trgTn]).distance != distBetweenTn)
-            //     int x = 3;
             minDist = std::min(dist, minDist);
         }
     }
     return minDist;
+}
+
+int TransitNodesQuery::query(int source, int target) {
+    if (lessThanNGridCellsAway(source, target, 4))
+        return graph->dijkstra(source, target).distance;
+    
+    query_alg(source, target);
+}
+
+ResultDTO TransitNodesQuery::path_query(int source, int target) {
+    // source and target are less than 8 grid cells apart -> run dijkstra
+    if (lessThanNGridCellsAway(source, target, 8))
+        return graph->dijkstra(source, target);
+
+    std::vector<int> fwdPath {source};
+    std::vector<int> bwdPath {target};
+    int pathLength = query_alg(source, target);
+    int remLengthFwd = pathLength;
+    int remLengthBwd = pathLength;
+    int u_bwd = target;
+    int u_fwd = source;
+    bool shopaFound = false;
+    while (!shopaFound) {
+        if (!lessThanNGridCellsAway(u_fwd, target, 4)) {
+            for (int i = graph->offsets[u_fwd]; i < graph->offsets[u_fwd + 1]; i++) {
+                int v = graph->targets[i];
+                int cost = graph->costs[i];
+                int dist = query_alg(v, target) + cost;
+                if (dist == remLengthFwd) {
+                    remLengthFwd -= cost;
+                    u_fwd = v;
+                    fwdPath.push_back(u_fwd);
+                }
+            }
+        }
+        if (!lessThanNGridCellsAway(u_bwd, source, 4)) {
+            for (int i = graph->offsets[u_bwd]; i < graph->offsets[u_bwd + 1]; i++) {
+                int v = graph->targets[i];
+                int cost = graph->costs[i];
+                int dist = query_alg(v, target) + cost;
+                if (dist == remLengthFwd) {
+                    remLengthFwd -= cost;
+                    u_bwd = v;
+                    bwdPath.push_back(u_bwd);
+                }
+            }
+        }
+        if (u_bwd == u_fwd)
+            shopaFound = true;
+    }
+
+    std::vector<int> shopa;
+    for (int i = 0; i < fwdPath.size(); i++) {
+        shopa.push_back(fwdPath[i]);
+    }
+    for (int i = bwdPath.size(); i >= 0; i++) {
+        shopa.push_back(bwdPath[i]);
+    }
+    return ResultDTO(shopa, pathLength);
+}
+
+bool TransitNodesQuery::lessThanNGridCellsAway(int u, int v, int n) {
+    int srcCellX = UtilFunctions::getCellX(graph->nodes[u], tnData.gridsize_x);
+    int trgCellX = UtilFunctions::getCellX(graph->nodes[v], tnData.gridsize_x);
+    int srcCellY = UtilFunctions::getCellY(graph->nodes[u], tnData.gridsize_y);
+    int trgCellY = UtilFunctions::getCellY(graph->nodes[v], tnData.gridsize_y);
+    return (std::abs(trgCellX - srcCellX) <= n || std::abs(trgCellX - srcCellX) >= tnData.gridsize_x - n) && std::abs(trgCellY - srcCellY) <= n;
 }

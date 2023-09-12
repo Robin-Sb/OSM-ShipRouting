@@ -13,8 +13,8 @@
 
 
 struct ResultDTO {
-    ResultDTO(std::vector<Vec2Sphere> &_path, int _distance): path(_path), distance(_distance) {};
-    std::vector<Vec2Sphere> path;
+    ResultDTO(std::vector<int> &_path, int _distance): path(_path), distance(_distance) {};
+    std::vector<int> path;
     int distance;
 };
 

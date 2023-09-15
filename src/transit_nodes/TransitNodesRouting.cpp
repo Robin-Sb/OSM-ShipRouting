@@ -36,8 +36,6 @@ std::vector<Vec2Sphere> TransitNodesRouting::getTransitNodesOfCell(int cellX, in
     return tnsAsVec;
 }
 
-// TODO: wraparound antimeridian and pole case
-// TODO: maybe the whole transit nodes search can be refactored into a new class
 TransitNodesData TransitNodesRouting::sweepLineTransitNodesMain() {
     // the nodeindices have 1:1 correspondence to mapindex anyway, why do we need to store both
     // set length of local transit nodes to avoid segfault
@@ -119,7 +117,6 @@ void TransitNodesRouting::computeDistancesBetweenTransitNodes() {
     }
 }
 
-// TODO: There are now 3 different dijkstra implementation, try to refactor them into two or less
 std::vector<int> TransitNodesRouting::dijkstraSSSP(int source) {
     std::vector<int> dist;
     std::vector<int> prev; 
@@ -227,14 +224,11 @@ std::vector<Vec2Sphere> TransitNodesRouting::transformBack() {
     return nodes;
 }
 
-// TODO: I think antimeridian case does not work yet -> Fix later
 void TransitNodesRouting::findEdgeBuckets() {
     edgeBucketsHorizontal = std::vector<std::vector<std::vector<int>>> (gridsize, std::vector<std::vector<int>> (gridsize));
     edgeBucketsVertical = std::vector<std::vector<std::vector<int>>> (gridsize, std::vector<std::vector<int>> (gridsize));
     for (int i = 0; i < graph->sources.size(); i++) {
         // constructor of Vec2 creates an equidistant cylindrical projection on a unit interval [0, 1]
-        if ((graph->sources[i] == 86 || graph->targets[i] == 86) && (graph->sources[i] == 1199 || graph->targets[i] == 1199) )
-            int x = 3;
         Vec2 startProj = Vec2(graph->nodes[graph->sources[i]]);
         Vec2 endProj = Vec2(graph->nodes[graph->targets[i]]);
         fillBucketsVertical(startProj, endProj, i);

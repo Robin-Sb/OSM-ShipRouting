@@ -175,36 +175,36 @@ std::string GeoWriter::buildNodesAsEdges(std::vector<Vec2Sphere> nodes) {
     return out;
 }
 
-void GeoWriter::buildGridGeoJson(std::vector<std::pair<Vec2Sphere, Vec2Sphere>> grid, std::string filename) {
+void GeoWriter::buildGridGeoJson(std::vector<std::pair<Vec2Sphere, Vec2Sphere>> grid, const std::string filename) {
     std::string content = buildGridGeoJson(grid);
     writeToDisk(content, filename);
 }
 
-void GeoWriter::buildNodesAsEdges(std::vector<Vec2Sphere> nodes, std::string filename) {
+void GeoWriter::buildNodesAsEdges(std::vector<Vec2Sphere> nodes, const std::string filename) {
     std::string content = buildNodesAsEdges(nodes);
     writeToDisk(content, filename);
 }
 
-void GeoWriter::buildPolygonGeoJson(std::vector<SingleCoast> &coastlines, std::string filename) {
+void GeoWriter::buildPolygonGeoJson(std::vector<SingleCoast> &coastlines, const std::string filename) {
     std::string content = buildPolygonGeoJson(coastlines);
     writeToDisk(content, filename);
 }
 
-void GeoWriter::buildNodesGeoJson(std::vector<Vec2Sphere> &nodes, std::string filename) {
+void GeoWriter::buildNodesGeoJson(std::vector<Vec2Sphere> &nodes, const std::string filename) {
     std::string content = buildNodesGeoJson(nodes);
     writeToDisk(content, filename);
 }
 
-void GeoWriter::buildGraphGeoJson(std::vector<Vec2Sphere> &nodes, std::vector<int> &sources, std::vector<int> &targets, std::string filename) {
+void GeoWriter::buildGraphGeoJson(std::vector<Vec2Sphere> &nodes, std::vector<int> &sources, std::vector<int> &targets, const std::string filename) {
     std::string content = buildGraphGeoJson(nodes, sources, targets);
     writeToDisk(content, filename);
 
 }
-void GeoWriter::buildPathGeoJson(std::vector<Vec2Sphere> &path, int distance, std::string filename) {
+void GeoWriter::buildPathGeoJson(std::vector<Vec2Sphere> &path, int distance, const std::string filename) {
     std::string content = buildPathGeoJson(path, distance);
     writeToDisk(content, filename);
 }
-void GeoWriter::buildLineSegmentsJson(std::vector<Vec2Sphere> lineSegments, std::string filename) {
+void GeoWriter::buildLineSegmentsJson(std::vector<Vec2Sphere> lineSegments, const std::string filename) {
     std::string content = buildLineSegmentsJson(lineSegments);
     writeToDisk(content, filename);
 }
@@ -222,12 +222,12 @@ std::string GeoWriter::generateFMI(std::vector<Vec2Sphere> &nodes, std::vector<i
     return out;
 }
 
-void GeoWriter::generateFMI(std::vector<Vec2Sphere> &nodes, std::vector<int> &sources, std::vector<int> &targets, std::vector<int> &costs, std::string filename) {
+void GeoWriter::generateFMI(std::vector<Vec2Sphere> &nodes, std::vector<int> &sources, std::vector<int> &targets, std::vector<int> &costs, const std::string filename) {
     std::string result = generateFMI(nodes, sources, targets, costs);
     writeToDisk(result, filename);
 }
 
-void GeoWriter::writeToDisk(std::string j_string, std::string &file_name) {
+void GeoWriter::writeToDisk(std::string j_string, const std::string &file_name) {
     std::ofstream json_stream;
     json_stream.open (file_name);
     json_stream << j_string;
@@ -235,7 +235,7 @@ void GeoWriter::writeToDisk(std::string j_string, std::string &file_name) {
 }
 
 // kind of discontinued -> maybe refactor later
-void GeoWriter::buildGraphFromFMI(std::string filename) {
+void GeoWriter::buildGraphFromFMI(const std::string filename) {
     std::vector<int> sources;
     std::vector<int> targets;
     std::vector<int> costs;
@@ -298,7 +298,7 @@ void GeoWriter::readEdges(std::ifstream &file, int m, std::vector<int> &sources,
 }
 
 
-void GeoWriter::writeTransitNodes(TransitNodesData &tnr, std::string filename) {
+void GeoWriter::writeTransitNodes(TransitNodesData &tnr, const std::string filename) {
     std::string out;
     // append #transitnodes and gridsize and #nodes
     out += std::to_string(tnr.transitNodes.size()) + "\n";
@@ -333,7 +333,7 @@ void GeoWriter::writeTransitNodes(TransitNodesData &tnr, std::string filename) {
     GeoWriter::writeToDisk(out, filename);
 }
 
-TransitNodesData GeoWriter::readTransitNodes(std::string filename) {
+TransitNodesData GeoWriter::readTransitNodes(const std::string filename) {
     std::ifstream file(filename);
     if (file.is_open()) {
         std::string n_tnNodes_str;

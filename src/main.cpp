@@ -26,7 +26,7 @@ const int GRIDSIZE = 64;
 const std::string GRAPH_PATH = "../graphs/graph.fmi";
 const std::string TN_PATH = "../tns/transit_nodes.tnr";
 
-void generate_graph(Graph &graph, int amount, std::string &filename) {
+void generate_graph(Graph &graph, int amount, const std::string &filename) {
     auto otypes = osmium::osm_entity_bits::node | osmium::osm_entity_bits::way;
     //osmium::io::File input_file{"../files/planet-coastlinespbf-cleanedosm.pbf"};
     osmium::io::File input_file{"../files/planet-coastlinespbf-cleanedosm.pbf"};
@@ -162,11 +162,27 @@ bool checkIfFileExists(const std::string &fileName) {
     return infile.good();
 }
 
+void save_transitNodes(TransitNodesData &tnData, std::string filename) {
+    std::ofstream ofs(filename);
+    boost::archive::binary_oarchive oa(ofs);
+    oa << tnData;
+}
+
+void load_transitNodes(TransitNodesData &tnData, std::string filename) {
+    std::ifstream ifs(filename, std::ios::binary);
+    boost::archive::binary_iarchive ia(ifs);
+    ia >> tnData;
+}
+
 void generateTransitNodes(std::shared_ptr<Graph> graph) {
     TransitNodesRouting tnr = TransitNodesRouting(graph, GRIDSIZE);
     tnr.findEdgeBuckets();
     TransitNodesData tnrData = tnr.sweepLineTransitNodesMain();
     save_transitNodes(tnrData, TN_PATH);
+}
+
+void getTnStats(std::shared_ptr<TransitNodesData> tnData) {
+
 }
 
 void benchmark(std::shared_ptr<Graph> graph, std::shared_ptr<TransitNodesData> tnData) {
@@ -178,25 +194,65 @@ void benchmark(std::shared_ptr<Graph> graph, std::shared_ptr<TransitNodesData> t
     auto now = std::chrono::high_resolution_clock::now();
     double total_time_dijkstra = 0;
     double total_time_tn = 0;
+    double total_time_long_tn = 0;
+    double total_time_long_dijkstra = 0;
+    double total_time_short_tn = 0;
+    double total_time_short_dijkstra = 0;
+    int n_short_queries;
+    int n_long_queries;
     for(int i = 0; i < n; ++i) {
         int source = distr(gen);
         int target = distr(gen);
         auto startTn = std::chrono::high_resolution_clock::now();
-        int resultTn = tnQuery.query(source, target);
+        TnQueryResult resultTn = tnQuery.query(source, target);
         auto endTn = std::chrono::high_resolution_clock::now();
-        total_time_tn += std::chrono::duration_cast<std::chrono::nanoseconds> (endTn-startTn).count();
+        double duration_tn = std::chrono::duration_cast<std::chrono::nanoseconds> (endTn-startTn).count();
 
         auto startDijkstra = std::chrono::high_resolution_clock::now();
         int resultDijkstra = graph->dijkstra(source, target).distance;
         auto endDijkstra = std::chrono::high_resolution_clock::now();
-        total_time_dijkstra += std::chrono::duration_cast<std::chrono::nanoseconds> (endDijkstra-startDijkstra).count();
+        double duration_dijkstra = std::chrono::duration_cast<std::chrono::nanoseconds> (endDijkstra-startDijkstra).count();
 
-        if (resultTn != resultDijkstra) {
+        if (resultTn.distance != resultDijkstra) {
             std::cout << "result wrong for " << source << ", " << target << "\n";
+            continue;
+        }
+
+        total_time_dijkstra += duration_dijkstra;
+        total_time_tn += duration_tn;
+        if (resultTn.long_range) {
+            n_long_queries++;
+            total_time_long_dijkstra += duration_dijkstra; 
+            total_time_long_tn += duration_tn;
+        } else {
+            n_short_queries++;
+            total_time_short_dijkstra += duration_dijkstra;
+            total_time_short_tn += duration_tn;
         }
     }
-    std::cout << "dijkstra: "  << total_time_dijkstra << "\n";
-    std::cout << "tn: " << total_time_tn << "\n";
+    double dijkstra_total_ms = total_time_dijkstra / 1000.0;
+    double dijkstra_short_ms = total_time_short_dijkstra / 1000.0;
+    double dijkstra_long_ms = total_time_long_dijkstra / 1000.0;
+
+    double tn_total_ms = total_time_tn / 1000.0;
+    double tn_short_ms = total_time_short_tn / 1000.0;
+    double tn_long_ms = total_time_long_tn / 1000.0;
+    std::cout << "dijkstra: "  << dijkstra_total_ms << "ms\n";
+    std::cout << "tn: " << tn_total_ms << "ms\n";
+    std::cout << "dijkstra short range: " << dijkstra_short_ms << "ms\n";
+    std::cout << "tn short range: " << tn_short_ms << "ms\n";
+    std::cout << "dijkstra long range: " << dijkstra_long_ms << "ms\n";
+    std::cout << "tn long range: " << tn_long_ms << "ms\n";
+
+    std::cout << "dijkstra  avg: "  << dijkstra_total_ms / static_cast<double>(n) << "ms\n";
+    std::cout << "tn avg: " << tn_total_ms / static_cast<double>(n)<< "ms\n";
+    std::cout << "dijkstra short range avg: " << dijkstra_short_ms / static_cast<double>(n_short_queries) << "ms\n";
+    std::cout << "tn short range avg: " << tn_short_ms / static_cast<double>(n_short_queries) << "ms\n";
+    std::cout << "dijkstra long range avg: " << dijkstra_long_ms / static_cast<double>(n_long_queries) << "ms\n";
+    std::cout << "tn long range avg: " << total_time_long_tn / static_cast<double>(n_long_queries) << "ms\n";
+
+    std::cout << "# of long range queries: " << n_long_queries << "\n";
+    std::cout << "# of short range queries: " << n_short_queries << "\n";
 }
 
 void tn_test(std::shared_ptr<Graph> graph, std::shared_ptr<TransitNodesData> tnData) {
@@ -209,13 +265,13 @@ void tn_test(std::shared_ptr<Graph> graph, std::shared_ptr<TransitNodesData> tnD
     for(int n = 0; n < 1000; ++n) {
         int source = distr(gen);
         int target = distr(gen);
-        int resultTn = tnQuery.query(source, target);
+        TnQueryResult resultTn = tnQuery.query(source, target);
         int resultDijkstra = graph->dijkstra(source, target).distance;
         if (resultDijkstra == -1) {
             std::cout << "unreachable \n";
             continue;
         }
-        if (resultTn != resultDijkstra) {
+        if (resultTn.distance != resultDijkstra) {
             std::cout << "result wrong for " << source << ", " << target << "\n";
             std::cout << "source lat: " << graph->nodes[source].lat << ", target lat: " << graph->nodes[target].lat << "\n";
             wrong_results++;
@@ -225,17 +281,6 @@ void tn_test(std::shared_ptr<Graph> graph, std::shared_ptr<TransitNodesData> tnD
     std::cout << wrong_results;;
 }
 
-void save_transitNodes(TransitNodesData &tnData, std::string filename) {
-    std::ofstream ofs(filename);
-    boost::archive::binary_oarchive oa(ofs);
-    oa << tnData;
-}
-
-void load_transitNodes(TransitNodesData &tnData, std::string filename) {
-    std::ifstream ifs(filename, std::ios::binary);
-    boost::archive::binary_iarchive ia(ifs);
-    ia >> tnData;
-}
 
 void log_grid(int gridsize) {
     std::vector<std::pair<Vec2Sphere, Vec2Sphere>> grid;
@@ -264,11 +309,10 @@ void graph_tests(Graph &graph) {
 
 int main() {
     Graph graph = Graph();
-    std::string filename = "../graphs/graph_1m_cut.fmi";
     if (checkIfFileExists(GRAPH_PATH)) {
-        graph.buildFromFMI(filename);
+        graph.buildFromFMI(GRAPH_PATH);
     } else {
-        generate_graph(graph, 1000000, filename);
+        generate_graph(graph, 1000000, GRAPH_PATH);
     }
     //checkGraphBidirectional(graph);
     //GeoWriter::buildGraphGeoJson(graph.nodes, graph.sources, graph.targets, "../files/tnr_antimeridian.json");

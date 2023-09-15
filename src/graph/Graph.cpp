@@ -1,6 +1,6 @@
 #include "Graph.h"
 
-void Graph::buildFromFMI(std::string fmiFile) {
+void Graph::buildFromFMI(const std::string fmiFile) {
     std::ifstream file(fmiFile);
     if (file.is_open()) {
         std::string n_nodes;

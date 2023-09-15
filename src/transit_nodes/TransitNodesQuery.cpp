@@ -28,11 +28,11 @@ int TransitNodesQuery::query_alg(int source, int target) {
     return minDist;
 }
 
-int TransitNodesQuery::query(int source, int target) {
+TnQueryResult TransitNodesQuery::query(int source, int target) {
     if (lessThanNGridCellsAway(source, target, 4))
-        return graph->dijkstra(source, target).distance;
+        return TnQueryResult(graph->dijkstra(source, target).distance, false);
     
-    return query_alg(source, target);
+    return TnQueryResult(query_alg(source, target), true);
 }
 
 ResultDTO TransitNodesQuery::path_query(int source, int target) {

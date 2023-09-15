@@ -31,7 +31,7 @@ class Graph {
         void trim(int minLat, int maxLat, int minLon, int maxLon);
         void generate(int n, std::vector<SingleCoast> &coastlines);
         void generate(int n, std::vector<SingleCoast> &coastlines, float minLat, float maxLat, float minLon, float maxLon);
-        void buildFromFMI(std::string fmiFile);
+        void buildFromFMI(const std::string fmiFile);
         void readNodes(std::ifstream &file, int n);
         void readEdges(std::ifstream &file, int m);
         ResultDTO dijkstra(int startIndex, int endIndex);

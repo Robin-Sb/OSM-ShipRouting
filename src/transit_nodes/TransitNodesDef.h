@@ -13,6 +13,15 @@ enum RelativePosition {
     UNDEF
 };
 
+struct TnQueryResult {
+    TnQueryResult(int _distance, bool _long_range) {
+        distance = _distance;
+        long_range = _long_range;
+    }
+    int distance;
+    bool long_range;
+};
+
 struct NodeDistance {
     NodeDistance(int _nodeIndex, int _distanceToV) {
         nodeIndex = _nodeIndex;

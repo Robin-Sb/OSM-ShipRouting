@@ -16,9 +16,6 @@ void SingleTnPass::singleSweepLinePass() {
     for (int &iterableIndex = vertical ? sweepIndexY : sweepIndexX; iterableIndex < gridsize; iterableIndex++) {
         for (int edgeIndex = 0; edgeIndex < edgeBucketsMain->at(sweepIndexX)[sweepIndexY].size(); edgeIndex++) {
             vIndex = graph->sources[edgeBucketsMain->at(sweepIndexX)[sweepIndexY][edgeIndex]];
-
-            if (vIndex == 2262)
-                int x = 3;
             // skip duplicates
             if (vs.find(vIndex) != vs.end())
                 continue;
@@ -177,8 +174,6 @@ void SingleTnPass::storeDistancesNegative() {
 }
 
 std::vector<NodeDistance> SingleTnPass::dijkstra() {
-    //int sourceCellX = UtilFunctions::getCellX(graph->nodes[vIndex], gridsize);
-    //int sourceCellY = UtilFunctions::getCellY(graph->nodes[vIndex], gridsize);
     std::vector<int> prev;
     std::vector<int> dist;
     std::vector<NodeDistance> nodeDistances;
@@ -306,14 +301,6 @@ void SingleTnPass::findTransitNodes(std::vector<std::vector<std::unordered_set<i
                     transitNodesOfCells[getCell(graph->nodes[targetPos], gridsize)][(sweepIndexY + 2) % gridsize].insert(transitNodeId);
                 }
             }
-            // if (vertical) {
-            //     transitNodesOfCells[(sweepIndexX - 3 + gridsize) % gridsize][gridCellNegative].insert(transitNodeId);
-            //     transitNodesOfCells[(sweepIndexX + 2) % gridsize][gridCellPositive].insert(transitNodeId);
-            // } else {
-            //     transitNodesOfCells[gridCellNegative][(sweepIndexY - 3 + gridsize) % gridsize].insert(transitNodeId);
-            //     transitNodesOfCells[gridCellPositive][(sweepIndexY + 2) % gridsize].insert(transitNodeId);
-            // }
-
         }
     }
 }

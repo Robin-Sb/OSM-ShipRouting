@@ -6,7 +6,7 @@
 class TransitNodesQuery {
     public:
         TransitNodesQuery(std::shared_ptr<Graph> _graph, std::shared_ptr<TransitNodesData> _tnData);
-        int query(int source, int target);
+        TnQueryResult query(int source, int target);
         ResultDTO path_query(int source, int target);
         bool lessThanNGridCellsAway(int u, int v, int n);
     private:

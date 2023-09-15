@@ -10,8 +10,10 @@ int TransitNodesQuery::query_alg(int source, int target) {
     int trgCellX = UtilFunctions::getCellX(graph->nodes[target], tnData.gridsize_x);
     int srcCellY = UtilFunctions::getCellY(graph->nodes[source], tnData.gridsize_y);
     int trgCellY = UtilFunctions::getCellY(graph->nodes[target], tnData.gridsize_y);
+    
 
     int minDist = 2000000000;
+    
     for (int i = 0; i < tnData.distancesToLocalTransitNodes[source].size(); i++) {
         for (int j = 0; j < tnData.distancesToLocalTransitNodes[target].size(); j++) {
             int srcToTnDist = tnData.distancesToLocalTransitNodes[source][i];
@@ -30,7 +32,7 @@ int TransitNodesQuery::query(int source, int target) {
     if (lessThanNGridCellsAway(source, target, 4))
         return graph->dijkstra(source, target).distance;
     
-    query_alg(source, target);
+    return query_alg(source, target);
 }
 
 ResultDTO TransitNodesQuery::path_query(int source, int target) {

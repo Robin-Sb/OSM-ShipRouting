@@ -1,7 +1,11 @@
 #pragma once
+#include <boost/archive/binary_oarchive.hpp>
+#include <boost/archive/binary_iarchive.hpp>
+#include <boost/serialization/vector.hpp>
 #include <unordered_map>
 #include <vector>
 #include "../utils/Utils.h"
+
 
 enum RelativePosition {
     NEGATIVE,
@@ -47,6 +51,7 @@ struct BoundaryNodeData {
 };
 
 struct TransitNodesData {
+    friend class boost::serialization::access;
     TransitNodesData(std::vector<int> _transitNodes, std::vector<std::vector<int>> _distancesBetweenTransitNodes, std::vector<std::vector<std::vector<int>>> _transitNodesPerCell, std::vector<std::vector<int>> _distancesToLocalTransitNodes, int _gridsize_x, int _gridsize_y) {
         transitNodes = _transitNodes;
         distancesBetweenTransitNodes = _distancesBetweenTransitNodes;
@@ -63,4 +68,15 @@ struct TransitNodesData {
     std::vector<std::vector<int>> distancesToLocalTransitNodes;
     int gridsize_x;
     int gridsize_y;
+
+    template <typename Archive>
+    void serialize(Archive& ar, const unsigned int version)
+    {
+        ar & transitNodes;
+        ar & distancesBetweenTransitNodes;
+        ar & transitNodesPerCell;
+        ar & distancesToLocalTransitNodes;
+        ar & gridsize_x;
+        ar & gridsize_y;
+    }
 };

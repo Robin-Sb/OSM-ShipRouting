@@ -15,8 +15,10 @@ find_package(Osmium REQUIRED)
 if(NOT OSMIUM_FOUND)
     message(WARNING "Libosmium not found!\n")
 endif()
-
 include_directories(${OSMIUM_INCLUDE_DIRS})
+
+find_package(Boost 1.70.0 COMPONENTS system filesystem serialization REQUIRED)
+include_directories(${BOOST_INCLUDE_DIRS})
 
 set(GRAPH src/graph/Graph.h src/graph/Graph.cpp src/graph/GraphGenerator.h src/graph/GraphGenerator.cpp src/graph/InPolyTest.h src/graph/InPolyTest.cpp)
 set(UTILS src/utils/Utils.h src/utils/Utils.cpp src/utils/GraphUtils.h src/utils/GraphUtils.cpp)
@@ -26,7 +28,7 @@ set(TRANSIT_NODES src/transit_nodes/TransitNodesRouting.h src/transit_nodes/Tran
 set(SOURCES src/main.cpp libs/server_http.hpp)
 add_executable(osm ${SOURCES} ${GRAPH} ${UTILS} ${IO} ${TRANSIT_NODES})
 target_include_directories(osm PRIVATE ${CMAKE_SOURCE_DIR}/src)
-target_link_libraries(osm -lz -pthread)
+target_link_libraries(osm -lz -pthread ${Boost_LIBRARIES})
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})

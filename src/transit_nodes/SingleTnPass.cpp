@@ -17,7 +17,7 @@ void SingleTnPass::singleSweepLinePass() {
         for (int edgeIndex = 0; edgeIndex < edgeBucketsMain->at(sweepIndexX)[sweepIndexY].size(); edgeIndex++) {
             vIndex = graph->sources[edgeBucketsMain->at(sweepIndexX)[sweepIndexY][edgeIndex]];
 
-            if (vIndex == 1053 || vIndex == 358)
+            if (vIndex == 2262)
                 int x = 3;
             // skip duplicates
             if (vs.find(vIndex) != vs.end())
@@ -32,6 +32,7 @@ void SingleTnPass::singleSweepLinePass() {
             distancesToNearestTransitNode[vIndex] = dijkstraResults;
             vs.insert(vIndex);
         }
+       std::cout << "x: " << sweepIndexX << ", y: " << sweepIndexY << "\n";
     }
 }
 
@@ -100,10 +101,8 @@ void SingleTnPass::findBoundaryNodesNegative(int xIndex, int yIndex, bool vertic
             boundaryNodes[endIndex].edges.push_back(edgeIndex);
             continue;
         }
-        //|| boundaryNodes[endIndex].isAtCellBoundary)
-        //    continue;
-        // order nodes by their x/y coordinate and take the far away node (because then all nodes within cell will be setlled)
-        int nodeIndex = std::min(startIndex, endIndex); // orderNodes(startIndex, endIndex, verticalPass).second;
+        // take vertex with minimum index for uniqueness
+        int nodeIndex = std::min(startIndex, endIndex); 
         if (nodeIdxToMapIdxNegative.find(nodeIndex) == nodeIdxToMapIdxNegative.end()) {
             std::unordered_map<int, int> distanceData;
             nodeIdxToMapIdxNegative[nodeIndex] = distancesNegative.size();
@@ -130,8 +129,7 @@ void SingleTnPass::findBoundaryNodesPositive(int xIndex, int yIndex, bool vertic
             boundaryEdges.at(endIndex).push_back(edgeIndex);
             continue;
         }
-        // order nodes by their x/y coordinate and take the far away node (because then all nodes within cell will be setlled)
-        int nodeIndex = std::min(startIndex, endIndex); //orderNodes(startIndex, endIndex, verticalPass).second;
+        int nodeIndex = std::min(startIndex, endIndex); 
         if (nodeIdxToMapIdxPositive.find(nodeIndex) == nodeIdxToMapIdxPositive.end()) {
             std::unordered_map<int, int> distanceData;
             nodeIdxToMapIdxPositive[nodeIndex] = distancesPositive.size();
@@ -179,6 +177,8 @@ void SingleTnPass::storeDistancesNegative() {
 }
 
 std::vector<NodeDistance> SingleTnPass::dijkstra() {
+    //int sourceCellX = UtilFunctions::getCellX(graph->nodes[vIndex], gridsize);
+    //int sourceCellY = UtilFunctions::getCellY(graph->nodes[vIndex], gridsize);
     std::vector<int> prev;
     std::vector<int> dist;
     std::vector<NodeDistance> nodeDistances;
@@ -199,10 +199,10 @@ std::vector<NodeDistance> SingleTnPass::dijkstra() {
         int u = node.second;
         if (explored[u])
             continue;
-        if (counter == n_boundaryNodes) 
-            break;
+        // if (counter == n_boundaryNodes) 
+        //     break;
         if (boundaryNodes[u].isAtCellBoundary) {
-            counter++;
+            //counter++;
             if (boundaryNodes[u].relPos == RelativePosition::NEGATIVE)
                 cNegative[boundaryNodes[u].localIndex].distanceToV = dist[u];
             else if (boundaryNodes[u].relPos == RelativePosition::POSITIVE)
@@ -216,6 +216,12 @@ std::vector<NodeDistance> SingleTnPass::dijkstra() {
         for (int i = graph->offsets[u]; i < graph->offsets[u + 1]; i++) {
             int v = graph->targets[i];
             if (explored[v])
+                continue;
+
+            int vCellX = UtilFunctions::getCellX(graph->nodes[v], gridsize);
+            int vCellY = UtilFunctions::getCellY(graph->nodes[v], gridsize);
+            // stop if outside of 3x3 (kind of) search radius
+            if (std::abs(vCellX - sweepIndexX) > 3 && std::abs(vCellY - sweepIndexY) > 3)
                 continue;
 
             int altDist = dist[u] + graph->costs[i];

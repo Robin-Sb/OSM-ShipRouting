@@ -35,7 +35,7 @@ void generate_graph(Graph &graph, int amount, std::string &filename) {
     reader.close();
     CoastlineStitcher stitcher = CoastlineStitcher(handler.coastlines);
     std::vector<SingleCoast> coastlines = stitcher.stitchCoastlines();
-    graph.generate(amount, coastlines);
+    graph.generate(amount, coastlines, -90, 85, -180, 180);
     std::string graph_fmi = GeoWriter::generateFMI(graph.nodes, graph.sources, graph.targets, graph.costs);
     GeoWriter::writeToDisk(graph_fmi, filename);
 }
@@ -158,15 +158,44 @@ bool checkIfFileExists(std::string &fileName) {
     return infile.good();
 }
 
+void benchmark(std::shared_ptr<Graph> graph, TransitNodesData &tnData) {
+    TransitNodesQuery tnQuery = TransitNodesQuery(graph, tnData);
+    std::random_device rd; // obtain a random number from hardware
+    std::mt19937 gen(rd()); // seed the generator
+    std::uniform_int_distribution<> distr(0, graph->nodes.size() - 1); // define the range
+    int n = 10000;
+    auto now = std::chrono::high_resolution_clock::now();
+    double total_time_dijkstra = 0;
+    double total_time_tn = 0;
+    for(int i = 0; i < n; ++i) {
+        int source = distr(gen);
+        int target = distr(gen);
+        auto startTn = std::chrono::high_resolution_clock::now();
+        int resultTn = tnQuery.query(source, target);
+        auto endTn = std::chrono::high_resolution_clock::now();
+        total_time_tn += std::chrono::duration_cast<std::chrono::nanoseconds> (endTn-startTn).count();
+
+        auto startDijkstra = std::chrono::high_resolution_clock::now();
+        int resultDijkstra = graph->dijkstra(source, target).distance;
+        auto endDijkstra = std::chrono::high_resolution_clock::now();
+        total_time_dijkstra += std::chrono::duration_cast<std::chrono::nanoseconds> (endDijkstra-startDijkstra).count();
+
+        if (resultTn != resultDijkstra) {
+            std::cout << "result wrong for " << source << ", " << target << "\n";
+        }
+    }
+    std::cout << "dijkstra: "  << total_time_dijkstra << "\n";
+    std::cout << "tn: " << total_time_tn << "\n";
+}
+
 void tn_test(std::shared_ptr<Graph> graph, TransitNodesData &tnData) {
     TransitNodesQuery tnQuery = TransitNodesQuery(graph, tnData);
 
-    tnQuery.query(219, 1479);
     std::random_device rd; // obtain a random number from hardware
     std::mt19937 gen(rd()); // seed the generator
     std::uniform_int_distribution<> distr(0, graph->nodes.size() - 1); // define the range
 
-    for(int n=0; n<1000; ++n) {
+    for(int n = 0; n < 10000; ++n) {
         int source = distr(gen);
         int target = distr(gen);
         int resultTn = tnQuery.query(source, target);
@@ -175,6 +204,18 @@ void tn_test(std::shared_ptr<Graph> graph, TransitNodesData &tnData) {
             std::cout << "result wrong for " << source << ", " << target << "\n";
         }
     }
+}
+
+void save_transitNodes(TransitNodesData &tnData, std::string filename) {
+    std::ofstream ofs(filename);
+    boost::archive::binary_oarchive oa(ofs);
+    oa << tnData;
+}
+
+void load_transitNodes(TransitNodesData &tnData, std::string filename) {
+    std::ifstream ifs(filename, std::ios::binary);
+    boost::archive::binary_iarchive ia(ifs);
+    ia >> tnData;
 }
 
 void log_grid(int gridsize) {
@@ -203,43 +244,55 @@ void graph_tests(Graph &graph) {
 }
 
 int main() {
-    log_grid(256);
-    // return 0;
+    //log_grid(256);
     Graph graph = Graph();
-    std::string filename = "../graphs/graph.fmi";
+    std::string filename = "../graphs/graph_1m_cut.fmi";
     if (checkIfFileExists(filename)) {
         graph.buildFromFMI(filename);
     } else {
         generate_graph(graph, 1000000, filename);
     }
-    checkGraphBidirectional(graph);
+    //checkGraphBidirectional(graph);
     // GeoWriter::generateFMI(graph.nodes, graph.sources, graph.targets, graph.costs, "../files/graph_small_test.fmi");
-    // GeoWriter::buildGraphGeoJson(graph.nodes, graph.sources, graph.targets, "../files/tnr_antimeridian.json");
+    //GeoWriter::buildGraphGeoJson(graph.nodes, graph.sources, graph.targets, "../files/tnr_antimeridian.json");
 
     std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
-    TransitNodesRouting tnr = TransitNodesRouting(graph_ptr, 256);
+    TransitNodesRouting tnr = TransitNodesRouting(graph_ptr, 64);
     tnr.findEdgeBuckets();
+    TransitNodesData tnrData = tnr.sweepLineTransitNodesMain();
     // std::vector<Vec2Sphere> gridNodes = tnr.transformBack();
     // GeoWriter::buildNodesAsEdges(gridNodes, "../files/gridnodes_all.json");
-    TransitNodesData tnrData = tnr.sweepLineTransitNodesMain();
-
-    GeoWriter::writeTransitNodes(tnrData, "../files/transit_nodes.tnr");
-    TransitNodesData tnrDataNew = GeoWriter::readTransitNodes("../shared_files/transit_nodes.tnr");
+    std::string fileTN("../tns/transit_nodes_1m_128.tnr");
+    std::cout << "Tn search finished \n";
+    save_transitNodes(tnrData, fileTN);
+    TransitNodesData tnrDataNew;
+    load_transitNodes(tnrDataNew, fileTN);
     bool ioCorrect = isTheSame(tnrData, tnrDataNew);
     if (!ioCorrect)
         std::cout << "something went wrong when reading/writing transit nodes." << std::endl;
-    
-    tn_test(graph_ptr, tnrData);
-    
+    std::cout << "Run tests \n";
+    tn_test(graph_ptr, tnrDataNew);
+    //benchmark(graph_ptr, tnrDataNew);
+
+
     // std::vector<Vec2Sphere> tNodes; 
     // for (int i = 0; i < tnr.transitNodes.size(); i++) {
     //     tNodes.push_back(graph.nodes[tnr.transitNodes[i]]);
     // }
-    // ResultDTO optPath = graph.dijkstra(166, 1459);
+
+    // ResultDTO optPath = graph.dijkstra(2442, 2433);
     // std::vector<Vec2Sphere> path;
     // for (int i = 0; i < optPath.path.size(); i++) 
     //     path.push_back(graph.nodes[optPath.path[i]]);
-    // GeoWriter::buildPathGeoJson(path, optPath.distance, "../files/opt166-1459.json");
+    // GeoWriter::buildPathGeoJson(path, optPath.distance, "../files/opt2442-2433.json");
+
+    // std::vector<Vec2Sphere> tn25267 = tnr.getTransitNodesOfCell(252, 67);
+    // GeoWriter::buildNodesGeoJson(tn25267, "../files/cell252-67.json");    
+    
+    // std::vector<Vec2Sphere> tn163 = tnr.getTransitNodesOfCell(1, 63);
+    // GeoWriter::buildNodesGeoJson(tn163, "../files/cell1-63.json");
+
+
 
     //graph_tests(graph);
     // std::string graph_json = GeoWriter::buildGraphGeoJson(graph.nodes, graph.sources, graph.targets);

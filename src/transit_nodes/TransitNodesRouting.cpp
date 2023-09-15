@@ -65,7 +65,9 @@ TransitNodesData TransitNodesRouting::sweepLineTransitNodesMain() {
     }
 
     collectTransitNodes();
+    std::cout << "TNs collected \n";
     computeDistancesBetweenTransitNodes();
+    std::cout << "Distances computed \n";
     TransitNodesData transitNodesData = postprocessTransitNodes();
     return transitNodesData;
 }

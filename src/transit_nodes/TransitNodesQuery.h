@@ -5,12 +5,12 @@
 
 class TransitNodesQuery {
     public:
-        TransitNodesQuery(std::shared_ptr<Graph> _graph, TransitNodesData _tnData);
+        TransitNodesQuery(std::shared_ptr<Graph> _graph, std::shared_ptr<TransitNodesData> _tnData);
         int query(int source, int target);
         ResultDTO path_query(int source, int target);
         bool lessThanNGridCellsAway(int u, int v, int n);
     private:
         std::shared_ptr<Graph> graph;
-        TransitNodesData tnData;
+        std::shared_ptr<TransitNodesData> tnData;
         int query_alg(int source, int target);
 };

@@ -132,10 +132,14 @@ ResultDTO Graph::dijkstra(int source, int target) {
     std::vector<int> path;
     int currentNode = target;
     while (currentNode != source) {
+        // if target can't be reached from source, currentNode will be -1 
+        if (currentNode == -1) {
+            std::vector<int> empty;
+            return ResultDTO(empty, -1);
+        }
         path.push_back(currentNode);
         currentNode = prev[currentNode];
     }
-    //path.push_back(source);
 
     std::reverse(path.begin(), path.end());
     std::vector<Vec2Sphere> nodePath;

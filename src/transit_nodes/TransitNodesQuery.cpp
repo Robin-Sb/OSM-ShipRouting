@@ -1,27 +1,27 @@
 #include "TransitNodesQuery.h"
 
-TransitNodesQuery::TransitNodesQuery(std::shared_ptr<Graph> _graph, TransitNodesData _tnData) {
+TransitNodesQuery::TransitNodesQuery(std::shared_ptr<Graph> _graph, std::shared_ptr<TransitNodesData> _tnData) {
     graph = _graph;
     tnData = _tnData;
 }
 
 int TransitNodesQuery::query_alg(int source, int target) {
-    int srcCellX = UtilFunctions::getCellX(graph->nodes[source], tnData.gridsize_x);
-    int trgCellX = UtilFunctions::getCellX(graph->nodes[target], tnData.gridsize_x);
-    int srcCellY = UtilFunctions::getCellY(graph->nodes[source], tnData.gridsize_y);
-    int trgCellY = UtilFunctions::getCellY(graph->nodes[target], tnData.gridsize_y);
+    int srcCellX = UtilFunctions::getCellX(graph->nodes[source], tnData->gridsize_x);
+    int trgCellX = UtilFunctions::getCellX(graph->nodes[target], tnData->gridsize_x);
+    int srcCellY = UtilFunctions::getCellY(graph->nodes[source], tnData->gridsize_y);
+    int trgCellY = UtilFunctions::getCellY(graph->nodes[target], tnData->gridsize_y);
     
 
-    int minDist = 2000000000;
+    long minDist = 2000000000;
     
-    for (int i = 0; i < tnData.distancesToLocalTransitNodes[source].size(); i++) {
-        for (int j = 0; j < tnData.distancesToLocalTransitNodes[target].size(); j++) {
-            int srcToTnDist = tnData.distancesToLocalTransitNodes[source][i];
-            int trgToTnDist = tnData.distancesToLocalTransitNodes[target][j];
-            int srcTn = tnData.transitNodesPerCell[srcCellX][srcCellY][i];
-            int trgTn = tnData.transitNodesPerCell[trgCellX][trgCellY][j];
-            int distBetweenTn = tnData.distancesBetweenTransitNodes[srcTn][trgTn];
-            int dist = srcToTnDist + trgToTnDist + distBetweenTn;
+    for (int i = 0; i < tnData->distancesToLocalTransitNodes[source].size(); i++) {
+        for (int j = 0; j < tnData->distancesToLocalTransitNodes[target].size(); j++) {
+            int srcToTnDist = tnData->distancesToLocalTransitNodes[source][i];
+            int trgToTnDist = tnData->distancesToLocalTransitNodes[target][j];
+            int srcTn = tnData->transitNodesPerCell[srcCellX][srcCellY][i];
+            int trgTn = tnData->transitNodesPerCell[trgCellX][trgCellY][j];
+            int distBetweenTn = tnData->distancesBetweenTransitNodes[srcTn][trgTn];
+            long dist = std::max(srcToTnDist + trgToTnDist + distBetweenTn, distBetweenTn);
             minDist = std::min(dist, minDist);
         }
     }
@@ -88,9 +88,9 @@ ResultDTO TransitNodesQuery::path_query(int source, int target) {
 }
 
 bool TransitNodesQuery::lessThanNGridCellsAway(int u, int v, int n) {
-    int srcCellX = UtilFunctions::getCellX(graph->nodes[u], tnData.gridsize_x);
-    int trgCellX = UtilFunctions::getCellX(graph->nodes[v], tnData.gridsize_x);
-    int srcCellY = UtilFunctions::getCellY(graph->nodes[u], tnData.gridsize_y);
-    int trgCellY = UtilFunctions::getCellY(graph->nodes[v], tnData.gridsize_y);
-    return (std::abs(trgCellX - srcCellX) <= n || std::abs(trgCellX - srcCellX) >= tnData.gridsize_x - n) && std::abs(trgCellY - srcCellY) <= n;
+    int srcCellX = UtilFunctions::getCellX(graph->nodes[u], tnData->gridsize_x);
+    int trgCellX = UtilFunctions::getCellX(graph->nodes[v], tnData->gridsize_x);
+    int srcCellY = UtilFunctions::getCellY(graph->nodes[u], tnData->gridsize_y);
+    int trgCellY = UtilFunctions::getCellY(graph->nodes[v], tnData->gridsize_y);
+    return (std::abs(trgCellX - srcCellX) <= n || std::abs(trgCellX - srcCellX) >= tnData->gridsize_x - n) && std::abs(trgCellY - srcCellY) <= n;
 }

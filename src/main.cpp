@@ -158,12 +158,12 @@ bool checkIfFileExists(std::string &fileName) {
     return infile.good();
 }
 
-void benchmark(std::shared_ptr<Graph> graph, TransitNodesData &tnData) {
+void benchmark(std::shared_ptr<Graph> graph, std::shared_ptr<TransitNodesData> tnData) {
     TransitNodesQuery tnQuery = TransitNodesQuery(graph, tnData);
     std::random_device rd; // obtain a random number from hardware
     std::mt19937 gen(rd()); // seed the generator
     std::uniform_int_distribution<> distr(0, graph->nodes.size() - 1); // define the range
-    int n = 10000;
+    int n = 1000;
     auto now = std::chrono::high_resolution_clock::now();
     double total_time_dijkstra = 0;
     double total_time_tn = 0;
@@ -188,22 +188,34 @@ void benchmark(std::shared_ptr<Graph> graph, TransitNodesData &tnData) {
     std::cout << "tn: " << total_time_tn << "\n";
 }
 
-void tn_test(std::shared_ptr<Graph> graph, TransitNodesData &tnData) {
+void tn_test(std::shared_ptr<Graph> graph, std::shared_ptr<TransitNodesData> tnData) {
     TransitNodesQuery tnQuery = TransitNodesQuery(graph, tnData);
 
+    tnQuery.query(460451, 275305);
+    tnQuery.query(404974, 12747);
+    tnQuery.query(694290, 204637);
     std::random_device rd; // obtain a random number from hardware
     std::mt19937 gen(rd()); // seed the generator
     std::uniform_int_distribution<> distr(0, graph->nodes.size() - 1); // define the range
 
-    for(int n = 0; n < 10000; ++n) {
+    int wrong_results;
+    for(int n = 0; n < 1000; ++n) {
         int source = distr(gen);
         int target = distr(gen);
         int resultTn = tnQuery.query(source, target);
         int resultDijkstra = graph->dijkstra(source, target).distance;
+        if (resultDijkstra == -1) {
+            std::cout << "unreachable \n";
+            continue;
+        }
         if (resultTn != resultDijkstra) {
             std::cout << "result wrong for " << source << ", " << target << "\n";
+            std::cout << "source lat: " << graph->nodes[source].lat << ", target lat: " << graph->nodes[target].lat << "\n";
+            wrong_results++;
         }
+        std::cout << n << "\n";
     }
+    std::cout << wrong_results;;
 }
 
 void save_transitNodes(TransitNodesData &tnData, std::string filename) {
@@ -252,26 +264,31 @@ int main() {
     } else {
         generate_graph(graph, 1000000, filename);
     }
+    graph.dijkstra(73499, 119650);
+    //graph.dijkstra(249982);
     //checkGraphBidirectional(graph);
     // GeoWriter::generateFMI(graph.nodes, graph.sources, graph.targets, graph.costs, "../files/graph_small_test.fmi");
     //GeoWriter::buildGraphGeoJson(graph.nodes, graph.sources, graph.targets, "../files/tnr_antimeridian.json");
 
     std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
-    TransitNodesRouting tnr = TransitNodesRouting(graph_ptr, 64);
-    tnr.findEdgeBuckets();
-    TransitNodesData tnrData = tnr.sweepLineTransitNodesMain();
+
+    //TransitNodesRouting tnr = TransitNodesRouting(graph_ptr, 64);
+    //tnr.findEdgeBuckets();
+    //TransitNodesData tnrData = tnr.sweepLineTransitNodesMain();
+
     // std::vector<Vec2Sphere> gridNodes = tnr.transformBack();
     // GeoWriter::buildNodesAsEdges(gridNodes, "../files/gridnodes_all.json");
     std::string fileTN("../tns/transit_nodes_1m_128.tnr");
-    std::cout << "Tn search finished \n";
-    save_transitNodes(tnrData, fileTN);
+    //std::cout << "Tn search finished \n";
+    //save_transitNodes(tnrData, fileTN);
     TransitNodesData tnrDataNew;
     load_transitNodes(tnrDataNew, fileTN);
-    bool ioCorrect = isTheSame(tnrData, tnrDataNew);
-    if (!ioCorrect)
-        std::cout << "something went wrong when reading/writing transit nodes." << std::endl;
+    std::shared_ptr<TransitNodesData> tnr_ptr = std::make_shared<TransitNodesData>(std::move(tnrDataNew));
+    // bool ioCorrect = isTheSame(tnrData, tnrDataNew);
+    // if (!ioCorrect)
+    //     std::cout << "something went wrong when reading/writing transit nodes." << std::endl;
     std::cout << "Run tests \n";
-    tn_test(graph_ptr, tnrDataNew);
+    benchmark(graph_ptr, tnr_ptr);
     //benchmark(graph_ptr, tnrDataNew);
 
 

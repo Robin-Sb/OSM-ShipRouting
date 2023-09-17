@@ -13,6 +13,7 @@ class TransitNodesEvaluation {
         TransitNodesEvaluation(std::shared_ptr<Graph> _graph, std::shared_ptr<TransitNodesData> _tnData, int _gridsize); 
         void benchmark();
         void logCell(int gridCellX, int gridCellY);
+        void logTns(int gridCellX, int gridCellY);
 
     private:
         std::shared_ptr<Graph> graph;

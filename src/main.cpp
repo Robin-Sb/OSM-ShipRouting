@@ -25,7 +25,7 @@ using location_handler_type = osmium::handler::NodeLocationsForWays<index_type>;
 
 const int GRIDSIZE = 64;
 const std::string GRAPH_PATH = "../graphs/graph.fmi";
-const std::string TN_PATH = "../tns/transit_nodes.tnr";
+const std::string TN_PATH = "../tns/transit_nodes-2.tnr";
 const bool EVAL_ON = true;
 
 void generate_graph(Graph &graph, int amount, const std::string &filename) {
@@ -144,7 +144,7 @@ void startServer(Graph & graph) {
             SimpleWeb::CaseInsensitiveMultimap header;
             header.emplace("Access-Control-Allow-Origin", "*");
             response->write(path_json, header);
-        } catch(const std::exception &e) {
+        } catch (const std::exception &e) {
             response->write(SimpleWeb::StatusCode::client_error_bad_request, "Could not open path " + request->path + ": " + e.what());
         }
     };
@@ -207,15 +207,19 @@ void tn_test(std::shared_ptr<Graph> graph, std::shared_ptr<TransitNodesData> tnD
         } else {
             tnQuery.path_query(source, target);
         }
-        std::cout << n << "\n";
+        //std::cout << n << "\n";
     }
     std::cout << wrong_results;;
 }
 
 void log_grid(int gridsize) {
+    int minX = 0;
+    int maxX = 63;
+    int minY = 0;
+    int maxY = 15;
     std::vector<std::pair<Vec2Sphere, Vec2Sphere>> grid;
-    for (int x = 0; x < gridsize; x++) {
-        for (int y = 0; y < (gridsize / 2) - 1; y++) {
+    for (int x = minX; x < maxX; x++) {// gridsize; x++) {
+        for (int y = minY; y < maxY; y++) {// (gridsize / 2) - 1; y++) {
             float lon1 = UtilFunctions::unprojectX(static_cast<float>(x) / static_cast<float>(gridsize));
             float lat1 = UtilFunctions::unprojectY(static_cast<float>(y) / static_cast<float>(gridsize));
             int x_2 = x + 1 % gridsize;
@@ -237,7 +241,6 @@ int main() {
         generate_graph(graph, 1000000, GRAPH_PATH);
     }
     std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
-    
     TransitNodesData tnrData;
     if (checkIfFileExists(TN_PATH)) {
         // reload the stored transit nodes instead of regenerating on second pass
@@ -247,11 +250,14 @@ int main() {
         // only generate in the first run to clear RAM
         return 0;
     }
+
     std::shared_ptr<TransitNodesData> tnr_ptr = std::make_shared<TransitNodesData>(std::move(tnrData));
     std::cout << "Run Evaluation \n";
-    
     if (EVAL_ON) {
         TransitNodesEvaluation tnEval = TransitNodesEvaluation(graph_ptr, tnr_ptr, GRIDSIZE);
+        //tn_test(graph_ptr, tnr_ptr);
+        // tnEval.logTns(21, 7);
+        // tnEval.logCell(16, 6);
         tnEval.benchmark();
     }
     return 0;

@@ -65,20 +65,20 @@ void TransitNodesEvaluation::speedBenchmark() {
     double tn_short_ms = total_time_short_tn / 1000.0;
     double tn_long_ms = total_time_long_tn / 1000.0;
     std::string timeEval;
-    timeEval + "dijkstra: " + std::to_string(dijkstra_total_ms) + "ms\n";
-    timeEval + "tn: " + std::to_string(tn_total_ms) + "ms\n";
-    timeEval + "dijkstra short range: " + std::to_string(dijkstra_short_ms) + "ms\n";
-    timeEval + "tn short range: " + std::to_string(tn_short_ms) + "ms\n";
-    timeEval + "dijkstra long range: " + std::to_string(dijkstra_long_ms) + "ms\n";
-    timeEval + "tn long range: " + std::to_string(tn_long_ms) + "ms\n";
-    timeEval + "dijkstra  avg: "  + std::to_string(dijkstra_total_ms / static_cast<double>(n)) + "ms\n";
-    timeEval + "tn avg: " + std::to_string(tn_total_ms / static_cast<double>(n)) + "ms\n";
-    timeEval + "dijkstra short range avg: " + std::to_string(dijkstra_short_ms / static_cast<double>(n_short_queries)) + "ms\n";
-    timeEval + "tn short range avg: " + std::to_string(tn_short_ms / static_cast<double>(n_short_queries)) + "ms\n";
-    timeEval + "dijkstra long range avg: " + std::to_string(dijkstra_long_ms / static_cast<double>(n_long_queries)) + "ms\n";
-    timeEval + "tn long range avg: " + std::to_string(tn_long_ms / static_cast<double>(n_long_queries)) + "ms\n";
-    timeEval + "# of long range queries: " + std::to_string(n_long_queries) + "\n";
-    timeEval + "# of short range queries: " + std::to_string(n_short_queries) + "\n";
+    timeEval += "dijkstra: " + std::to_string(dijkstra_total_ms) + "ms\n";
+    timeEval += "tn: " + std::to_string(tn_total_ms) + "ms\n";
+    timeEval += "dijkstra short range: " + std::to_string(dijkstra_short_ms) + "ms\n";
+    timeEval += "tn short range: " + std::to_string(tn_short_ms) + "ms\n";
+    timeEval += "dijkstra long range: " + std::to_string(dijkstra_long_ms) + "ms\n";
+    timeEval += "tn long range: " + std::to_string(tn_long_ms) + "ms\n";
+    timeEval += "dijkstra  avg: "  + std::to_string(dijkstra_total_ms / static_cast<double>(n)) + "ms\n";
+    timeEval += "tn avg: " + std::to_string(tn_total_ms / static_cast<double>(n)) + "ms\n";
+    timeEval += "dijkstra short range avg: " + std::to_string(dijkstra_short_ms / static_cast<double>(n_short_queries)) + "ms\n";
+    timeEval += "tn short range avg: " + std::to_string(tn_short_ms / static_cast<double>(n_short_queries)) + "ms\n";
+    timeEval += "dijkstra long range avg: " + std::to_string(dijkstra_long_ms / static_cast<double>(n_long_queries)) + "ms\n";
+    timeEval += "tn long range avg: " + std::to_string(tn_long_ms / static_cast<double>(n_long_queries)) + "ms\n";
+    timeEval += "# of long range queries: " + std::to_string(n_long_queries) + "\n";
+    timeEval += "# of short range queries: " + std::to_string(n_short_queries) + "\n";
 
     GeoWriter::writeToDisk(timeEval, "../eval/speed_benchmark.txt");
 }
@@ -121,17 +121,21 @@ void TransitNodesEvaluation::tnStats() {
     logCell(maxCellX, maxCellY);
 }
 
-void TransitNodesEvaluation::logCell(int gridCellX, int gridCellY) {
+
+void TransitNodesEvaluation::logTns(int gridCellX, int gridCellY) {
     std::vector<Vec2Sphere> nodes;
     for (int i = 0; i < tnData->transitNodesPerCell[gridCellX][gridCellY].size(); i++) {
         nodes.push_back(graph->nodes[tnData->transitNodes[tnData->transitNodesPerCell[gridCellX][gridCellY][i]]]);
     }
     GeoWriter::buildNodesGeoJson(nodes, "../eval/cell" + std::to_string(gridCellX) + "-" + std::to_string(gridCellY) + ".json");
+} 
 
-    int minCellX = (gridCellX + gridsize - 5) % gridsize;
-    int maxCellX = (gridCellX + 5) % gridsize;
-    int minCellY = std::max(-gridsize, gridCellY - 5);
-    int maxCellY = std::min(gridsize - 1, gridCellY + 5);
+void TransitNodesEvaluation::logCell(int gridCellX, int gridCellY) {
+    logTns(gridCellX, gridCellY);
+    int minCellX = (gridCellX + gridsize - 3) % gridsize;
+    int maxCellX = (gridCellX + 3) % gridsize;
+    int minCellY = std::max(-gridsize, gridCellY - 3);
+    int maxCellY = std::min(gridsize - 1, gridCellY + 3);
 
     float minLon = UtilFunctions::unprojectX(static_cast<float>(minCellX) / static_cast<float>(gridsize));
     float maxLon = UtilFunctions::unprojectX(static_cast<float>(maxCellX) / static_cast<float>(gridsize));

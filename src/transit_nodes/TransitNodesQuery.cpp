@@ -12,7 +12,6 @@ int TransitNodesQuery::query_alg(int source, int target) {
     int srcCellY = UtilFunctions::getCellY(graph->nodes[source], tnData->gridsize_y);
     int trgCellY = UtilFunctions::getCellY(graph->nodes[target], tnData->gridsize_y);
     
-
     long minDist = 2000000000;
     
     for (int i = 0; i < tnData->distancesToLocalTransitNodes[source].size(); i++) {

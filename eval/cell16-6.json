@@ -1,0 +1,7 @@
+{ "type": "FeatureCollection",   "features": [{       "type": "Feature",       "properties":{"marker-color": "#006600"},   "geometry":{       "type": "MultiPoint",       "coordinates": [[-72.815636,
+-47.200550
+],
+[-73.275093,
+-52.713985
+]
+]}}]}

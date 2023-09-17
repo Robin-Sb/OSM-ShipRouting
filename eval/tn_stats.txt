@@ -1,6 +1,6 @@
 gridsize x: 64, gridsize y: 64
-# transit nodes: 32299
-max transit nodes per cell: 242 at 63, 9
-# non empty cells: 1618
-min non empty cells: 5
-average tns per non empty cell 111.728059
+# transit nodes: 54
+max transit nodes per cell: 23 at 22, 5
+# non empty cells: 16
+min non empty cells: 7
+average tns per non empty cell 14.375000

@@ -22,6 +22,8 @@ void SingleTnPass::singleSweepLinePass() {
             int edgeIndexGlobal = edgeBucketsMain->at(sweepIndexX)[sweepIndexY][edgeIndex];
             // always use the node with smaller id
             vIndex = std::min(graph->targets[edgeIndexGlobal], graph->sources[edgeIndexGlobal]);
+            if (vIndex == 5068 || vIndex == 6932)   
+                int x = 3;
             // skip if already computed
             if (vs.find(vIndex) != vs.end())
                 continue;
@@ -152,7 +154,7 @@ void SingleTnPass::findBoundaryNodesPositive(int xIndex, int yIndex, bool vertic
         }
         boundaryNodes[nodeIndex] = BoundaryNodeData(true, cPositive.size(), RelativePosition::POSITIVE);
         boundaryEdges.insert(std::pair<int, std::vector<int>>(nodeIndex, std::vector<int> {edgeIndex}));
-        cPositive.push_back(NodeDistance(nodeIndex, 0));
+        cPositive.push_back(NodeDistance(nodeIndex, 2147483647));
     }
 }
 

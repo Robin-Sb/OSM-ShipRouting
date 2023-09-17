@@ -47,6 +47,8 @@ class SingleTnPass {
         // contains one entry for every node; indicates whether that node is a cell boundary and must be settled
         std::vector<BoundaryNodeData> boundaryNodes;
 
+        // for a particular node, stores all the edges which are crossing a cell boundary
+        // is used s.t. the transit node can be added to all cells the edge is part of  
         std::unordered_map<int, std::vector<int>> boundaryEdges;
 
         // stores for every node on the boundary of cells along one sweepline pass the distance to all vs

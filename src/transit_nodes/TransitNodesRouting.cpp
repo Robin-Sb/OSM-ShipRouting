@@ -5,18 +5,16 @@ TransitNodesRouting::TransitNodesRouting(std::shared_ptr<Graph> _graph, int _gri
     gridsize = _gridsize;
 }
 
-
-
+// main sweepline algorithm
 TransitNodesData TransitNodesRouting::sweepLineTransitNodesMain() {
-    // the nodeindices have 1:1 correspondence to mapindex anyway, why do we need to store both
-    // set length of local transit nodes to avoid segfault
     localTransitNodes = std::vector<std::vector<NodeDistance>> (graph->nodes.size());
     transitNodesOfCells = std::vector<std::vector<std::unordered_set<int>>> (gridsize, std::vector<std::unordered_set<int>> (gridsize));
 
     std::shared_ptr<std::vector<std::vector<std::vector<int>>>> ebv_ptr = std::make_shared<std::vector<std::vector<std::vector<int>>>>(edgeBucketsVertical);
     std::shared_ptr<std::vector<std::vector<std::vector<int>>>> ebh_ptr = std::make_shared<std::vector<std::vector<std::vector<int>>>>(edgeBucketsHorizontal);
 
-    // first part, find distances from boundary nodes to all potential nodes
+    // run a sweepline over all cells in x direction
+    // store transit nodes and distances of all corresponding nodes
     for (int sweepIndexX = 0; sweepIndexX < gridsize; sweepIndexX++) {
         SingleTnPass tnSearchAlgo = SingleTnPass(sweepIndexX, 0, ebv_ptr, ebh_ptr, graph, gridsize, true);
         tnSearchAlgo.singleSweepLinePass();
@@ -41,6 +39,7 @@ TransitNodesData TransitNodesRouting::sweepLineTransitNodesMain() {
     return transitNodesData;
 }
 
+// convert transit nodes from set to array
 void TransitNodesRouting::collectTransitNodes() {
     transitNodes = std::vector<int> (transitNodeTmp.size());
     for (auto& tn : transitNodeTmp) {
@@ -48,6 +47,7 @@ void TransitNodesRouting::collectTransitNodes() {
     }
 }
 
+// convert transit nodes in a way so that they are easier to process
 TransitNodesData TransitNodesRouting::postprocessTransitNodes() {
     // convert to array instead of set for consistent ordering
     std::vector<std::vector<std::vector<int>>> transitNodesPerCell (gridsize, std::vector<std::vector<int>> (gridsize));
@@ -77,7 +77,6 @@ TransitNodesData TransitNodesRouting::postprocessTransitNodes() {
     return TransitNodesData(transitNodes, transitNodesDistances, transitNodesPerCell, distancesToLocalTransitNodes, gridsize, gridsize);
 }
 
-// this should be trivial to run concurrently
 void TransitNodesRouting::computeDistancesBetweenTransitNodes() {
     transitNodesDistances = std::vector<std::vector<int>> (transitNodes.size(), std::vector<int> (transitNodes.size()));
     for (int i = 0; i < transitNodes.size(); i++) {
@@ -88,6 +87,7 @@ void TransitNodesRouting::computeDistancesBetweenTransitNodes() {
     }
 }
 
+// single source shortest path dijkstra, used to calculate distances between transit nodes
 std::vector<int> TransitNodesRouting::dijkstraSSSP(int source) {
     std::vector<int> dist;
     std::vector<int> prev; 
@@ -143,9 +143,6 @@ void TransitNodesRouting::fillBucketsVertical(Vec2 start, Vec2 end, int edgeInde
     int firstIndexX = std::ceil(smallerX * gridsize);
     int lastIndexX = std::ceil(biggerX * gridsize);
 
-    if (lastIndexX == 256 && firstIndexX == 1)
-        int x = 3;
-
     // antimeridian case, somewhat hacky but the problem is also not exactly well defined
     if (lastIndexX - firstIndexX > gridsize/2) {
         int firstIndexTmp = firstIndexX;
@@ -159,7 +156,6 @@ void TransitNodesRouting::fillBucketsVertical(Vec2 start, Vec2 end, int edgeInde
     }
 }
 
-// Since long is 360 degress and lat is 180, vertical lines are more stretched out -> we find twice as many horizontal crossings on average
 void TransitNodesRouting::fillBucketsHorizontal(Vec2 start, Vec2 end, int edgeIndex) {
     float smallerY;
     float biggerY;
@@ -195,6 +191,7 @@ std::vector<Vec2Sphere> TransitNodesRouting::transformBack() {
     return nodes;
 }
 
+// find all cell crossings of edges in both vertical and horizontal direction, store them
 void TransitNodesRouting::findEdgeBuckets() {
     edgeBucketsHorizontal = std::vector<std::vector<std::vector<int>>> (gridsize, std::vector<std::vector<int>> (gridsize));
     edgeBucketsVertical = std::vector<std::vector<std::vector<int>>> (gridsize, std::vector<std::vector<int>> (gridsize));

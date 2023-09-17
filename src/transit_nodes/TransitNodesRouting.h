@@ -13,7 +13,9 @@ class TransitNodesRouting {
         void findEdgeBuckets();
         TransitNodesData sweepLineTransitNodesMain();
         std::vector<Vec2Sphere> transformBack();
+        // stores transit nodes
         std::vector<int> transitNodes;
+        // stores distances between transit nodes
         std::vector<std::vector<int>> transitNodesDistances;
         // pair of transit node id and distance to it
         std::vector<std::vector<NodeDistance>> localTransitNodes;
@@ -28,9 +30,13 @@ class TransitNodesRouting {
         void collectTransitNodes();
         int gridsize;
         std::shared_ptr<Graph> graph;
+        // stores all edges which cross the boundary of a gridcell in vertical direction
         std::vector<std::vector<std::vector<int>>> edgeBucketsVertical;
+        // same in horizontal direction
         std::vector<std::vector<std::vector<int>>> edgeBucketsHorizontal;
 
+        // for every cell, stores its transit nodes
         std::vector<std::vector<std::unordered_set<int>>> transitNodesOfCells;
+        // map from each transit node to its global node index
         std::unordered_map<int, int> transitNodeTmp;
 };

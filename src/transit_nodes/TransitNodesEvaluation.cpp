@@ -9,7 +9,7 @@ TransitNodesEvaluation::TransitNodesEvaluation(std::shared_ptr<Graph> _graph, st
 
 void TransitNodesEvaluation::benchmark() {
     tnStats();
-    //speedBenchmark();
+    speedBenchmark();
 }
 
 void TransitNodesEvaluation::speedBenchmark() {

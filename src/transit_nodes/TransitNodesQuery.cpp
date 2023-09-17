@@ -5,6 +5,7 @@ TransitNodesQuery::TransitNodesQuery(std::shared_ptr<Graph> _graph, std::shared_
     tnData = _tnData;
 }
 
+// query; loop over all pairs of transit nodes from source and target and take the minimum
 int TransitNodesQuery::query_alg(int source, int target) {
     int srcCellX = UtilFunctions::getCellX(graph->nodes[source], tnData->gridsize_x);
     int trgCellX = UtilFunctions::getCellX(graph->nodes[target], tnData->gridsize_x);
@@ -35,6 +36,9 @@ TnQueryResult TransitNodesQuery::query(int source, int target) {
     return TnQueryResult(query_alg(source, target), true);
 }
 
+// executes the query including the path
+// i am convinced that the algorithm is correct
+//but since distance queries are wrong sometimes this practically never returns the optimal path
 ResultDTO TransitNodesQuery::path_query(int source, int target) {
     // source and target are less than 8 grid cells apart -> run dijkstra
     if (lessThanNGridCellsAway(source, target, 8))
@@ -87,7 +91,8 @@ ResultDTO TransitNodesQuery::path_query(int source, int target) {
     }
 
     std::vector<int> shopa;
-    for (int i = 0; i < fwdPath.size(); i++) {
+    // -1 s.t. that the node in between is not included twice
+    for (int i = 0; i < fwdPath.size() - 1; i++) {
         shopa.push_back(fwdPath[i]);
     }
     for (int i = bwdPath.size(); i >= 0; i++) {

@@ -90,22 +90,26 @@ std::string GeoWriter::buildLineSegmentsJson(std::vector<Vec2Sphere> lineSegment
 
 
 std::string GeoWriter::buildGraphGeoJson(std::vector<Vec2Sphere> &nodes, std::vector<int> &sources, std::vector<int> &targets) {
+    return buildGraphGeoJson(nodes, sources, targets, -90, 90, -180, 180);
+}
+
+std::string GeoWriter::buildGraphGeoJson(std::vector<Vec2Sphere> &nodes, std::vector<int> &sources, std::vector<int> &targets, float minLat, float maxLat, float minLon, float maxLon) {
     std::string out = "{\"type\": \"FeatureCollection\",\n"
     "\"features\":[ \n";
-    int startIndex = 0; std::floor(sources.size() / 2) - 50000;
-    int endIndex = sources.size(); std::floor(sources.size() / 2) + 50000;
-    for (int i = startIndex; i < endIndex; i++) {
+    // int startIndex = 0; std::floor(sources.size() / 2) - 50000;
+    // int endIndex = sources.size(); std::floor(sources.size() / 2) + 50000;
+    for (int i = 0; i < sources.size(); i++) {
         float tLonSrc = nodes[sources[i]].lon;
+        if (nodes[sources[i]].lat < minLat || nodes[sources[i]].lat > maxLat)
+            continue;
+        if ((minLon < maxLon && (tLonSrc < minLon || tLonSrc > maxLon)) || (minLon > maxLon && ((tLonSrc > 0 && tLonSrc < minLon) || (tLonSrc < 0 && tLonSrc > maxLon)))) 
+            continue; 
         float tLonTrg = nodes[targets[i]].lon;
         if (nodes[sources[i]].lon < -175 && nodes[targets[i]].lon > 175) 
             tLonSrc = 180 + (180 + nodes[sources[i]].lon);
         if (nodes[sources[i]].lon > 175 && nodes[targets[i]].lon < -175)
             tLonTrg = 180 + (180 + nodes[targets[i]].lon);
 
-        // if (nodes[sources[i]].lat < 50 || nodes[sources[i]].lat > 60)
-        //     continue;
-        // if (tLonSrc < -15 || tLonSrc > 3) 
-        //     continue; 
         out += "{";
         out += "    \"type\": \"Feature\",\n"
         "    \"geometry\": {\n"
@@ -114,30 +118,15 @@ std::string GeoWriter::buildGraphGeoJson(std::vector<Vec2Sphere> &nodes, std::ve
         out += "[" + std::to_string(tLonSrc) + "," + std::to_string(nodes[sources[i]].lat) + "],\n";
         out += "[" + std::to_string(tLonTrg) + "," + std::to_string(nodes[targets[i]].lat) + "]\n";
         out += "]}, \"properties\": {}}";
-        if (i < endIndex - 1) {
-            out += ",";
-        }
+        //if (i < nodes.size() - 1) {
+        out += ",";
+        //}
     }
-    // bool drawPoints = false;
-    // if (drawPoints) {
-    //     out += ",";
-    //     for (int i = 0; i < drawNodes.size(); i++) {
-    //         out += "{";
-    //         out += "    \"type\": \"Feature\",\n"
-    //         "    \"geometry\": {\n"
-    //         "       \"type\": \"Point\",\n"
-    //         "       \"coordinates\": \n";
-    //         out += "[" + std::to_string(drawNodes[i].lon) + "," + std::to_string(drawNodes[i].lat) + "]\n";
-    //         out += "}, \"properties\": {}}";
-    //         if (i < drawNodes.size() - 1) {
-    //             out += ",";
-    //         }
-    //     }
-    // }
-
+    out.pop_back();
     out += "]}";
     return out;
 }
+
 
 std::string GeoWriter::buildGridGeoJson(std::vector<std::pair<Vec2Sphere, Vec2Sphere>> grid) {
     std::string out = "{\"type\": \"FeatureCollection\",\n"

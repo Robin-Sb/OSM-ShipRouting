@@ -13,6 +13,7 @@ class GeoWriter {
         static std::string buildPolygonGeoJson(std::vector<SingleCoast> &coastlines);
         static std::string buildNodesGeoJson(std::vector<Vec2Sphere> &nodes);
         static std::string buildGraphGeoJson(std::vector<Vec2Sphere> &nodes, std::vector<int> &sources, std::vector<int> &targets);
+        static std::string buildGraphGeoJson(std::vector<Vec2Sphere> &nodes, std::vector<int> &sources, std::vector<int> &targets, float minLat, float maxLat, float minLon, float maxLon);
         static std::string buildPathGeoJson(std::vector<Vec2Sphere> &path, int distance);
         static std::string buildLineSegmentsJson(std::vector<Vec2Sphere> lineSegments);
         static std::string buildNodesAsEdges(std::vector<Vec2Sphere> nodes);

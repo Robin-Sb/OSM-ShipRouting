@@ -49,15 +49,18 @@ ResultDTO TransitNodesQuery::path_query(int source, int target) {
     int u_fwd = source;
     bool shopaFound = false;
     while (!shopaFound) {
+        bool noProgress = true;
         if (!lessThanNGridCellsAway(u_fwd, target, 4)) {
             for (int i = graph->offsets[u_fwd]; i < graph->offsets[u_fwd + 1]; i++) {
                 int v = graph->targets[i];
                 int cost = graph->costs[i];
                 int dist = query_alg(v, target) + cost;
                 if (dist == remLengthFwd) {
+                    noProgress = false;
                     remLengthFwd -= cost;
                     u_fwd = v;
                     fwdPath.push_back(u_fwd);
+                    break;
                 }
             }
         }
@@ -65,16 +68,22 @@ ResultDTO TransitNodesQuery::path_query(int source, int target) {
             for (int i = graph->offsets[u_bwd]; i < graph->offsets[u_bwd + 1]; i++) {
                 int v = graph->targets[i];
                 int cost = graph->costs[i];
-                int dist = query_alg(v, target) + cost;
-                if (dist == remLengthFwd) {
-                    remLengthFwd -= cost;
+                int dist = query_alg(v, source) + cost;
+                if (dist == remLengthBwd) {
+                    noProgress = false;
+                    remLengthBwd -= cost;
                     u_bwd = v;
                     bwdPath.push_back(u_bwd);
+                    break;
                 }
             }
         }
         if (u_bwd == u_fwd)
             shopaFound = true;
+        if (noProgress) {
+            pathLength = -1;
+            break;
+        }
     }
 
     std::vector<int> shopa;

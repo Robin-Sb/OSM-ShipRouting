@@ -22,14 +22,13 @@ class SingleTnPass {
         void storeDistancesNegative();
         void storeDistancesPositive();
 
-
-        std::pair<int, int> orderNodes(int startIndex, int endIndex, bool verticalPass);
         // index of the node which is checked
         int vIndex;
-        std::unordered_map<int, int> nodeIdxToMapIdxNegative;
-        std::unordered_map<int, int> nodeIdxToMapIdxPositive;
 
+        // all the nodes along one sweepline (used to find them easily later in findTransitNodes)
         std::unordered_set<int> vs;
+        // map which stores the results of multiple dijkstra passed
+        // i.e. maps the index of all nodes in the cells c1...c5 to the potential transit nodes (aka all nodes in vs array)
         std::unordered_map<int, std::vector<NodeDistance>> distancesToNearestTransitNode;
 
         std::shared_ptr<Graph> graph;
@@ -39,6 +38,7 @@ class SingleTnPass {
         int sweepIndexX;
         int sweepIndexY;
         int gridsize;
+        // whether vertical or horizontal pass is executed, attempt to make everything more DRY
         bool vertical;
         // contains all the nodes in either the cell to the left (negative x) or down (negative y)
         std::vector<NodeDistance> cNegative;
@@ -46,9 +46,16 @@ class SingleTnPass {
         std::vector<NodeDistance> cPositive;
         // contains one entry for every node; indicates whether that node is a cell boundary and must be settled
         std::vector<BoundaryNodeData> boundaryNodes;
-        std::unordered_map<int, std::vector<int>> boundaryEdges;
-        int n_boundaryNodes;
 
+        std::unordered_map<int, std::vector<int>> boundaryEdges;
+
+        // stores for every node on the boundary of cells along one sweepline pass the distance to all vs
+        // one could refactor this s.t. nodes of cNegative and cPositive are remapped to nodes in distanceToNearestTransitNodes
+        // then those two vectors could be removed
         std::vector<DistanceData> distancesNegative;
         std::vector<DistanceData> distancesPositive;
+
+        // maps the nodeindices (in graph.nodes) to the indices in distancesNegative and distancesPositive
+        std::unordered_map<int, int> nodeIdxToMapIdxNegative;
+        std::unordered_map<int, int> nodeIdxToMapIdxPositive;
 };

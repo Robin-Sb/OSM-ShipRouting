@@ -15,6 +15,7 @@
 #include "./transit_nodes/TransitNodesRouting.h"
 #include "./transit_nodes/TransitNodesQuery.h"
 #include "./transit_nodes/TransitNodesDef.h"
+#include "./transit_nodes/TransitNodesEvaluation.h"
 
 // The type of index used. This must match the include file above
 using index_type = osmium::index::map::FlexMem<osmium::unsigned_object_id_type, osmium::Location>;
@@ -25,6 +26,7 @@ using location_handler_type = osmium::handler::NodeLocationsForWays<index_type>;
 const int GRIDSIZE = 64;
 const std::string GRAPH_PATH = "../graphs/graph.fmi";
 const std::string TN_PATH = "../tns/transit_nodes.tnr";
+const bool EVAL_ON = true;
 
 void generate_graph(Graph &graph, int amount, const std::string &filename) {
     auto otypes = osmium::osm_entity_bits::node | osmium::osm_entity_bits::way;
@@ -39,13 +41,12 @@ void generate_graph(Graph &graph, int amount, const std::string &filename) {
     reader.close();
     CoastlineStitcher stitcher = CoastlineStitcher(handler.coastlines);
     std::vector<SingleCoast> coastlines = stitcher.stitchCoastlines();
-    graph.generate(amount, coastlines, -90, 85, -180, 180);
+    graph.generate(amount, coastlines);
     std::string graph_fmi = GeoWriter::generateFMI(graph.nodes, graph.sources, graph.targets, graph.costs);
     GeoWriter::writeToDisk(graph_fmi, filename);
 }
 
-
-// function which compares the original (computed) tns with the stored tns
+// function which compares the computed tns with the relloaded tns
 bool isTheSame(TransitNodesData &tnrdata1, TransitNodesData &tnrdata2) {
     if (tnrdata1.transitNodes.size() != tnrdata2.transitNodes.size())
         return false;
@@ -85,6 +86,8 @@ bool isTheSame(TransitNodesData &tnrdata1, TransitNodesData &tnrdata2) {
     return true;
 }
 
+// very unoptimized (quadratic) functions which checks whether the graph is truly bidirectional
+// use with caution on big graphs (may take hours)
 void checkGraphBidirectional(Graph &graph) {
     bool bidir = true;
     for (int i = 0; i < graph.sources.size(); i++) {
@@ -162,13 +165,13 @@ bool checkIfFileExists(const std::string &fileName) {
     return infile.good();
 }
 
-void save_transitNodes(TransitNodesData &tnData, std::string filename) {
+void saveTransitNodes(TransitNodesData &tnData, std::string filename) {
     std::ofstream ofs(filename);
     boost::archive::binary_oarchive oa(ofs);
     oa << tnData;
 }
 
-void load_transitNodes(TransitNodesData &tnData, std::string filename) {
+void loadTransitNodes(TransitNodesData &tnData, std::string filename) {
     std::ifstream ifs(filename, std::ios::binary);
     boost::archive::binary_iarchive ia(ifs);
     ia >> tnData;
@@ -178,81 +181,7 @@ void generateTransitNodes(std::shared_ptr<Graph> graph) {
     TransitNodesRouting tnr = TransitNodesRouting(graph, GRIDSIZE);
     tnr.findEdgeBuckets();
     TransitNodesData tnrData = tnr.sweepLineTransitNodesMain();
-    save_transitNodes(tnrData, TN_PATH);
-}
-
-void getTnStats(std::shared_ptr<TransitNodesData> tnData) {
-
-}
-
-void benchmark(std::shared_ptr<Graph> graph, std::shared_ptr<TransitNodesData> tnData) {
-    TransitNodesQuery tnQuery = TransitNodesQuery(graph, tnData);
-    std::random_device rd; // obtain a random number from hardware
-    std::mt19937 gen(rd()); // seed the generator
-    std::uniform_int_distribution<> distr(0, graph->nodes.size() - 1); // define the range
-    int n = 1000;
-    auto now = std::chrono::high_resolution_clock::now();
-    double total_time_dijkstra = 0;
-    double total_time_tn = 0;
-    double total_time_long_tn = 0;
-    double total_time_long_dijkstra = 0;
-    double total_time_short_tn = 0;
-    double total_time_short_dijkstra = 0;
-    int n_short_queries;
-    int n_long_queries;
-    for(int i = 0; i < n; ++i) {
-        int source = distr(gen);
-        int target = distr(gen);
-        auto startTn = std::chrono::high_resolution_clock::now();
-        TnQueryResult resultTn = tnQuery.query(source, target);
-        auto endTn = std::chrono::high_resolution_clock::now();
-        double duration_tn = std::chrono::duration_cast<std::chrono::nanoseconds> (endTn-startTn).count();
-
-        auto startDijkstra = std::chrono::high_resolution_clock::now();
-        int resultDijkstra = graph->dijkstra(source, target).distance;
-        auto endDijkstra = std::chrono::high_resolution_clock::now();
-        double duration_dijkstra = std::chrono::duration_cast<std::chrono::nanoseconds> (endDijkstra-startDijkstra).count();
-
-        if (resultTn.distance != resultDijkstra) {
-            std::cout << "result wrong for " << source << ", " << target << "\n";
-            continue;
-        }
-
-        total_time_dijkstra += duration_dijkstra;
-        total_time_tn += duration_tn;
-        if (resultTn.long_range) {
-            n_long_queries++;
-            total_time_long_dijkstra += duration_dijkstra; 
-            total_time_long_tn += duration_tn;
-        } else {
-            n_short_queries++;
-            total_time_short_dijkstra += duration_dijkstra;
-            total_time_short_tn += duration_tn;
-        }
-    }
-    double dijkstra_total_ms = total_time_dijkstra / 1000.0;
-    double dijkstra_short_ms = total_time_short_dijkstra / 1000.0;
-    double dijkstra_long_ms = total_time_long_dijkstra / 1000.0;
-
-    double tn_total_ms = total_time_tn / 1000.0;
-    double tn_short_ms = total_time_short_tn / 1000.0;
-    double tn_long_ms = total_time_long_tn / 1000.0;
-    std::cout << "dijkstra: "  << dijkstra_total_ms << "ms\n";
-    std::cout << "tn: " << tn_total_ms << "ms\n";
-    std::cout << "dijkstra short range: " << dijkstra_short_ms << "ms\n";
-    std::cout << "tn short range: " << tn_short_ms << "ms\n";
-    std::cout << "dijkstra long range: " << dijkstra_long_ms << "ms\n";
-    std::cout << "tn long range: " << tn_long_ms << "ms\n";
-
-    std::cout << "dijkstra  avg: "  << dijkstra_total_ms / static_cast<double>(n) << "ms\n";
-    std::cout << "tn avg: " << tn_total_ms / static_cast<double>(n)<< "ms\n";
-    std::cout << "dijkstra short range avg: " << dijkstra_short_ms / static_cast<double>(n_short_queries) << "ms\n";
-    std::cout << "tn short range avg: " << tn_short_ms / static_cast<double>(n_short_queries) << "ms\n";
-    std::cout << "dijkstra long range avg: " << dijkstra_long_ms / static_cast<double>(n_long_queries) << "ms\n";
-    std::cout << "tn long range avg: " << total_time_long_tn / static_cast<double>(n_long_queries) << "ms\n";
-
-    std::cout << "# of long range queries: " << n_long_queries << "\n";
-    std::cout << "# of short range queries: " << n_short_queries << "\n";
+    saveTransitNodes(tnrData, TN_PATH);
 }
 
 void tn_test(std::shared_ptr<Graph> graph, std::shared_ptr<TransitNodesData> tnData) {
@@ -275,36 +204,29 @@ void tn_test(std::shared_ptr<Graph> graph, std::shared_ptr<TransitNodesData> tnD
             std::cout << "result wrong for " << source << ", " << target << "\n";
             std::cout << "source lat: " << graph->nodes[source].lat << ", target lat: " << graph->nodes[target].lat << "\n";
             wrong_results++;
+        } else {
+            tnQuery.path_query(source, target);
         }
         std::cout << n << "\n";
     }
     std::cout << wrong_results;;
 }
 
-
 void log_grid(int gridsize) {
     std::vector<std::pair<Vec2Sphere, Vec2Sphere>> grid;
     for (int x = 0; x < gridsize; x++) {
         for (int y = 0; y < (gridsize / 2) - 1; y++) {
-            float lon1 = Vec2::unprojectX(static_cast<float>(x) / static_cast<float>(gridsize));
-            float lat1 = Vec2::unprojectY(static_cast<float>(y) / static_cast<float>(gridsize));
+            float lon1 = UtilFunctions::unprojectX(static_cast<float>(x) / static_cast<float>(gridsize));
+            float lat1 = UtilFunctions::unprojectY(static_cast<float>(y) / static_cast<float>(gridsize));
             int x_2 = x + 1 % gridsize;
             int y_2 = y + 1;
-            float lon2 = Vec2::unprojectX(static_cast<float>(x_2) / static_cast<float>(gridsize));
-            float lat2 = Vec2::unprojectY(static_cast<float>(y_2) / static_cast<float>(gridsize));
+            float lon2 = UtilFunctions::unprojectX(static_cast<float>(x_2) / static_cast<float>(gridsize));
+            float lat2 = UtilFunctions::unprojectY(static_cast<float>(y_2) / static_cast<float>(gridsize));
             grid.push_back(std::make_pair(Vec2Sphere(lat1, lon1), Vec2Sphere(lat1, lon2)));
             grid.push_back(std::make_pair(Vec2Sphere(lat1, lon1), Vec2Sphere(lat2, lon1)));
         }
     }
-    GeoWriter::buildGridGeoJson(grid, "../files/grid2.json");;
-}
-
-void graph_tests(Graph &graph) {
-    graph.performDijkstraLogging(Vec2Sphere(-34.016241889667015, -96.50390625000001), Vec2Sphere(-27.68352808378776, -28.652343750000004));
-    graph.performDijkstraLogging(Vec2Sphere(32.694865977875075, 161.71875000000003), Vec2Sphere(-28.459033019728057, 80.50781250000001));
-    graph.performDijkstraLogging(Vec2Sphere(-0.3515602939922709, 69.60937500000001), Vec2Sphere(30.29701788337205, -48.33984375));
-    graph.performDijkstraLogging(Vec2Sphere(-62.75472592723178, 177.71484375), Vec2Sphere(-66.86108230224609, -18.457031250000004));
-    graph.performDijkstraLogging(Vec2Sphere(58.35563036280967, -20.917968750000004), Vec2Sphere(49.61070993807422, -24.082031250000004));
+    GeoWriter::buildGridGeoJson(grid, "../files/grid.json");;
 }
 
 int main() {
@@ -314,25 +236,23 @@ int main() {
     } else {
         generate_graph(graph, 1000000, GRAPH_PATH);
     }
-    //checkGraphBidirectional(graph);
-    //GeoWriter::buildGraphGeoJson(graph.nodes, graph.sources, graph.targets, "../files/tnr_antimeridian.json");
-
     std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
     
     TransitNodesData tnrData;
     if (checkIfFileExists(TN_PATH)) {
-        load_transitNodes(tnrData, TN_PATH);
+        // reload the stored transit nodes instead of regenerating on second pass
+        loadTransitNodes(tnrData, TN_PATH);
     } else {
-        // only generate in the first run to clear RAM
         generateTransitNodes(graph_ptr);
+        // only generate in the first run to clear RAM
         return 0;
     }
-
-    // std::vector<Vec2Sphere> gridNodes = tnr.transformBack();
-    // GeoWriter::buildNodesAsEdges(gridNodes, "../files/gridnodes_all.json");
-    std::string fileTN("../tns/transit_nodes_1m_128.tnr");
     std::shared_ptr<TransitNodesData> tnr_ptr = std::make_shared<TransitNodesData>(std::move(tnrData));
-    std::cout << "Run tests \n";
-    benchmark(graph_ptr, tnr_ptr);
+    std::cout << "Run Evaluation \n";
+    
+    if (EVAL_ON) {
+        TransitNodesEvaluation tnEval = TransitNodesEvaluation(graph_ptr, tnr_ptr, GRIDSIZE);
+        tnEval.benchmark();
+    }
     return 0;
 }

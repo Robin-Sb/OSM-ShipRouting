@@ -6,35 +6,6 @@ TransitNodesRouting::TransitNodesRouting(std::shared_ptr<Graph> _graph, int _gri
 }
 
 
-void TransitNodesRouting::debug() {
-    for (int i = 0; i < gridsize; i++) {
-        for (int j = 0; j < gridsize; j++) {
-            for (int k = 0; k < edgeBucketsVertical[i][j].size(); k++) {
-                std::cout << "x: " << std::to_string(i) << ", y: " << std::to_string(j) << ", edge: " << std::to_string(edgeBucketsVertical[i][j][k]) << std::endl;
-            }
-        }
-    }
-}
-
-std::string TransitNodesRouting::getTnList() {
-    std::string out;
-    for (int i = 0; i < localTransitNodes.size(); i++) {
-        out += std::to_string(graph->nodes[i].lat) + ", " + std::to_string(graph->nodes[i].lon) + "\n";
-        for (int j = 0; j < localTransitNodes[i].size(); j++) {
-            int tnNode = localTransitNodes[i][j].nodeIndex;
-            out += "\t" + std::to_string(graph->nodes[tnNode].lat) + ", " + std::to_string(graph->nodes[tnNode].lon) + ", dist: " + std::to_string(localTransitNodes[i][j].distanceToV) + "\n"; 
-        }
-    }
-    return out;
-}
-
-std::vector<Vec2Sphere> TransitNodesRouting::getTransitNodesOfCell(int cellX, int cellY) {
-    std::vector<Vec2Sphere> tnsAsVec; 
-    for (auto &transitNodeId : transitNodesOfCells[cellX][cellY]) {
-        tnsAsVec.push_back(graph->nodes[transitNodes[transitNodeId]]);
-    }
-    return tnsAsVec;
-}
 
 TransitNodesData TransitNodesRouting::sweepLineTransitNodesMain() {
     // the nodeindices have 1:1 correspondence to mapindex anyway, why do we need to store both

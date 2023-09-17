@@ -8,7 +8,6 @@ SingleTnPass::SingleTnPass(int _sweepIndexX, int _sweepIndexY, std::shared_ptr<s
     graph = _graph;
     gridsize = _gridsize;
     vertical = _vertical;
-    n_boundaryNodes = 0;
 }
 
 void SingleTnPass::singleSweepLinePass() {
@@ -23,7 +22,6 @@ void SingleTnPass::singleSweepLinePass() {
             cNegative.clear();
             cPositive.clear();
             boundaryNodes.clear();
-            n_boundaryNodes = 0;
 
             std::vector<NodeDistance> dijkstraResults = processSingleNode(vIndex);
             distancesToNearestTransitNode[vIndex] = dijkstraResults;
@@ -108,7 +106,6 @@ void SingleTnPass::findBoundaryNodesNegative(int xIndex, int yIndex, bool vertic
         boundaryNodes[nodeIndex] = BoundaryNodeData(true, cNegative.size(), RelativePosition::NEGATIVE);
         boundaryEdges.insert(std::pair<int, std::vector<int>>(nodeIndex, std::vector<int> {edgeIndex}));
         cNegative.push_back(NodeDistance(nodeIndex, 0));
-        n_boundaryNodes++;
     }
 }
 
@@ -136,20 +133,6 @@ void SingleTnPass::findBoundaryNodesPositive(int xIndex, int yIndex, bool vertic
         boundaryEdges.insert(std::pair<int, std::vector<int>>(nodeIndex, std::vector<int> {edgeIndex}));
         //boundaryEdges.at(nodeIndex).push_back(edgeIndex);
         cPositive.push_back(NodeDistance(nodeIndex, 0));
-        n_boundaryNodes++;
-    }
-}
-
-std::pair<int, int> SingleTnPass::orderNodes(int startIndex, int endIndex, bool verticalPass) {
-    // always use the node which is outside of the cell, s.t. a dijkstra run settles all nodes in the cells
-    if (verticalPass) {
-        int startCellX = UtilFunctions::getCellX(graph->nodes[startIndex], gridsize);
-        int endCellX = UtilFunctions::getCellX(graph->nodes[endIndex], gridsize);
-        return startCellX > endCellX ? std::make_pair(startIndex, endIndex) : std::make_pair(endIndex, startIndex);
-    } else {
-        int startCellY = UtilFunctions::getCellY(graph->nodes[startIndex], gridsize);
-        int endCellY = UtilFunctions::getCellY(graph->nodes[endIndex], gridsize);
-        return startCellY > endCellY ? std::make_pair(startIndex, endIndex) : std::make_pair(endIndex, startIndex);
     }
 }
 

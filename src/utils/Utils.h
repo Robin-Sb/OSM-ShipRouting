@@ -76,19 +76,20 @@ class Vec2 {
 
         float x;
         float y;
-        static float projectX(float lon);
-        static float projectY(float lat);
-        static float unprojectX(float x);
-        static float unprojectY(float y);
     private:
-        static float degToRad(float angleDeg);
-        static float radToDeg(float angleRad);
 };
 
 class UtilFunctions {
     public: 
         static int getCellX(Vec2Sphere &v, int gridX);
         static int getCellY(Vec2Sphere &v, int gridY);
+        static float projectX(float lon);
+        static float projectY(float lat);
+        static float unprojectX(float x);
+        static float unprojectY(float y);
+        static float degToRad(float angleDeg);
+        static float radToDeg(float angleRad);
+
 
         static bool sameCell(Vec2Sphere &v1, Vec2Sphere &v2, int gridsize);
 };

@@ -38,36 +38,36 @@ Vec2::Vec2(Vec2Sphere sphereBase) {
     //float max_y = 5.0/4.0 * std::asinh(std::tan((4.0/5.0) * (pi/2)));
     //y = (5.0/4.0 * std::asinh(std::tan(4.0/5.0 * lat)) + max_y) / (max_y * 2);
     // plate carree
-    x = projectX(sphereBase.lon);
-    y = projectY(sphereBase.lat);
+    x = UtilFunctions::projectX(sphereBase.lon);
+    y = UtilFunctions::projectY(sphereBase.lat);
     //y = ((lat - 0) + (pi / 2)) / pi;
     //y = std::asinh(std::tan(sphereBase.lat * deg_to_rad));
 }
 
 
-float Vec2::degToRad(float angleDeg) {
+float UtilFunctions::degToRad(float angleDeg) {
     return angleDeg * (pi / 180.0);
 }
 
-float Vec2::radToDeg(float angleRad) {
+float UtilFunctions::radToDeg(float angleRad) {
     return angleRad * (180.0 / pi);
 }
 
-float Vec2::unprojectX(float x) {
-    return radToDeg((x * 2 * pi) - pi);
+float UtilFunctions::unprojectX(float x) {
+    return UtilFunctions::radToDeg((x * 2 * pi) - pi);
 }
 
-float Vec2::unprojectY(float y) {
-    return radToDeg((y * 2 * pi) - (pi / 2));
+float UtilFunctions::unprojectY(float y) {
+    return UtilFunctions::radToDeg((y * 2 * pi) - (pi / 2));
 }
 
-float Vec2::projectX(float lon) {
-    lon = Vec2::degToRad(lon);
+float UtilFunctions::projectX(float lon) {
+    lon = UtilFunctions::degToRad(lon);
     return ((lon - 0) * std::cos(0) + pi) / (2 * pi);
 } 
 
-float Vec2::projectY(float lat) {
-    lat = Vec2::degToRad(lat);
+float UtilFunctions::projectY(float lat) {
+    lat = UtilFunctions::degToRad(lat);
     return ((lat - 0) + (pi / 2)) / (2 * pi);
 }
 
@@ -79,11 +79,11 @@ bool UtilFunctions::sameCell(Vec2Sphere &v1, Vec2Sphere &v2, int gridsize) {
 }
 
 int UtilFunctions::getCellX(Vec2Sphere &v, int gridX) {
-    float x = Vec2::projectX(v.lon);
+    float x = UtilFunctions::projectX(v.lon);
     return std::floor(x * gridX);
 }
 
 int UtilFunctions::getCellY(Vec2Sphere &v, int gridY) {
-    float y = Vec2::projectY(v.lat);
+    float y = UtilFunctions::projectY(v.lat);
     return std::floor(y * gridY);
 }

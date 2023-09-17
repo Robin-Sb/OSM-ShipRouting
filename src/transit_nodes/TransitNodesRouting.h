@@ -11,11 +11,8 @@ class TransitNodesRouting {
     public:
         TransitNodesRouting(std::shared_ptr<Graph> _graph, int _gridsize);
         void findEdgeBuckets();
-        void debug();
         TransitNodesData sweepLineTransitNodesMain();
-        std::vector<Vec2Sphere> getTransitNodesOfCell(int cellX, int cellY);
-        std::string getTnList();
-        std::vector<Vec2Sphere> transformBack(); 
+        std::vector<Vec2Sphere> transformBack();
         std::vector<int> transitNodes;
         std::vector<std::vector<int>> transitNodesDistances;
         // pair of transit node id and distance to it

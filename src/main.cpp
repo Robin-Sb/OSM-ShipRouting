@@ -118,7 +118,7 @@ int getEnd(std::string &query, int start) {
     return param;
 }
 
-void startServer(Graph & graph) {
+void startServer(Graph &graph) {
     SimpleWeb::Server<SimpleWeb::HTTP> server;
     server.config.port = 8080;
     server.default_resource["GET"] = [&graph](std::shared_ptr<SimpleWeb::Server<SimpleWeb::HTTP>::Response> response, std::shared_ptr<SimpleWeb::Server<SimpleWeb::HTTP>::Request> request) {
@@ -236,6 +236,7 @@ int main() {
         generate_graph(graph, 1000000, GRAPH_PATH);
     }
     std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
+
     TransitNodesData tnrData;
     if (checkIfFileExists(TN_PATH)) {
         // reload the stored transit nodes instead of regenerating on second pass
@@ -252,5 +253,7 @@ int main() {
         TransitNodesEvaluation tnEval = TransitNodesEvaluation(graph_ptr, tnr_ptr, GRIDSIZE);
         tnEval.benchmark();
     }
+    startServer(graph);
+
     return 0;
 }

@@ -57,16 +57,6 @@ void Graph::trim(int minLat, int maxLat, int minLon, int maxLon) {
     offsets = newOffsets;
 }
 
-// TODO: In many cases, we have to run a dijkstra from the same start node
-// This means, the computation can be sped up in various ways:
-// - only retrieve the startIndex once
-// - store information about the shortest path
-ResultDTO Graph::performDijkstraMultiple(int start, std::set<int> endNodes) {
-    //int startIndex = sGrid->findClosestPoint(startPos);
-    //int endIndex = sGrid->findClosestPoint(endPos);
-    //return dijkstra(startIndex, endIndex);
-}
-
 ResultDTO Graph::performDijkstraLogging(Vec2Sphere startPos, Vec2Sphere endPos) {
     // start the search with the node closest to the selected position
     auto startNodeSearch = std::chrono::system_clock::now();

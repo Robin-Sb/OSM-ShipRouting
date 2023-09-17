@@ -22,8 +22,11 @@ std::vector<int> SphericalGrid::getPointsAt(Vec2Sphere loc) {
 }
 
 int SphericalGrid::getIndexLon(Vec2Sphere loc) {
+    float lon = loc.lon;
+    if (lon > 180) 
+        lon = -180 + (lon - 180);
     int n_lon = cells.size();
-    return std::floor((loc.lon + 180)/(360 / (n_lon - 1)));
+    return std::floor((lon + 180)/(360 / (n_lon - 1)));
 }
 
 int SphericalGrid::getIndexLat(Vec2Sphere loc) {

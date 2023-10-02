@@ -23,9 +23,9 @@ using index_type = osmium::index::map::FlexMem<osmium::unsigned_object_id_type, 
 // The location handler always depends on the index type
 using location_handler_type = osmium::handler::NodeLocationsForWays<index_type>;
 
-const int GRIDSIZE = 64;
+const int GRIDSIZE = 128;
 const std::string GRAPH_PATH = "../graphs/graph.fmi";
-const std::string TN_PATH = "../tns/transit_nodes.tnr";
+const std::string TN_PATH = "../tns/transit_nodes-128.tnr";
 const bool EVAL_ON = true;
 
 void generate_graph(Graph &graph, int amount, const std::string &filename) {

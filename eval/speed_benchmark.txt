@@ -1,0 +1,14 @@
+dijkstra: 197755934.221000ms
+tn: 1203595.229000ms
+dijkstra short range: 1014444.212000ms
+tn short range: 1015336.777000ms
+dijkstra long range: 196741490.009000ms
+tn long range: 188258.452000ms
+dijkstra  avg: 197755.934221ms
+tn avg: 1203.595229ms
+dijkstra short range avg: 16362.003419ms
+tn short range avg: 16376.399629ms
+dijkstra long range avg: 212463.812105ms
+tn long range avg: 203.302864ms
+# of long range queries: 926
+# of short range queries: 62

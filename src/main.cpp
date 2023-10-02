@@ -23,9 +23,9 @@ using index_type = osmium::index::map::FlexMem<osmium::unsigned_object_id_type, 
 // The location handler always depends on the index type
 using location_handler_type = osmium::handler::NodeLocationsForWays<index_type>;
 
-const int GRIDSIZE = 128;
+const int GRIDSIZE = 96;
 const std::string GRAPH_PATH = "../graphs/graph.fmi";
-const std::string TN_PATH = "../tns/transit_nodes-128.tnr";
+const std::string TN_PATH = "../tns/transit_nodes-96.tnr";
 const bool EVAL_ON = true;
 
 void generate_graph(Graph &graph, int amount, const std::string &filename) {
@@ -201,11 +201,13 @@ void tn_test(std::shared_ptr<Graph> graph, std::shared_ptr<TransitNodesData> tnD
             continue;
         }
         if (resultTn.distance != resultDijkstra) {
-            std::cout << "result wrong for " << source << ", " << target << "\n";
+            //std::cout << "result wrong for " << source << ", " << target << "\n";
             std::cout << "source lat: " << graph->nodes[source].lat << ", target lat: " << graph->nodes[target].lat << "\n";
             wrong_results++;
         } else {
-            tnQuery.path_query(source, target);
+            // ResultDTO resultTnPath = tnQuery.path_query(source, target);
+            // if (resultTnPath.distance != -1) 
+            //     std::cout << "correct path \n";
         }
     }
     std::cout << wrong_results;
@@ -249,6 +251,7 @@ int main() {
 
     std::shared_ptr<TransitNodesData> tnr_ptr = std::make_shared<TransitNodesData>(std::move(tnrData));
     std::cout << "Run Evaluation \n";
+    // tn_test(graph_ptr, tnr_ptr);
     if (EVAL_ON) {
         TransitNodesEvaluation tnEval = TransitNodesEvaluation(graph_ptr, tnr_ptr, GRIDSIZE);
         tnEval.benchmark();

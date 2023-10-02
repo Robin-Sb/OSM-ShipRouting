@@ -38,11 +38,13 @@ TnQueryResult TransitNodesQuery::query(int source, int target) {
 // executes the query including the path
 // i am convinced that the algorithm is correct
 //but since distance queries are wrong sometimes this practically never returns the optimal path
-ResultDTO TransitNodesQuery::path_query(int source, int target) {
+std::pair<ResultDTO, bool> TransitNodesQuery::path_query(int source, int target) {
     // source and target are less than 8 grid cells apart -> run dijkstra
     if (lessThanNGridCellsAway(source, target, 8))
-        return graph->dijkstra(source, target);
+        return std::make_pair(graph->dijkstra(source, target), false);
 
+    std::set<int> fwdNodes {source};
+    std::set<int> bwdNodes {target};
     std::vector<int> fwdPath {source};
     std::vector<int> bwdPath {target};
     int pathLength = query_alg(source, target);
@@ -62,6 +64,7 @@ ResultDTO TransitNodesQuery::path_query(int source, int target) {
                     noProgress = false;
                     remLengthFwd -= cost;
                     u_fwd = v;
+                    fwdNodes.insert(u_fwd);
                     fwdPath.push_back(u_fwd);
                     break;
                 }
@@ -77,11 +80,12 @@ ResultDTO TransitNodesQuery::path_query(int source, int target) {
                     remLengthBwd -= cost;
                     u_bwd = v;
                     bwdPath.push_back(u_bwd);
+                    bwdNodes.insert(u_bwd);
                     break;
                 }
             }
         }
-        if (u_bwd == u_fwd)
+        if (fwdNodes.find(u_bwd) != fwdNodes.end() || bwdNodes.find(u_fwd) != bwdNodes.end())
             shopaFound = true;
         if (noProgress) {
             pathLength = -1;
@@ -94,10 +98,10 @@ ResultDTO TransitNodesQuery::path_query(int source, int target) {
     for (int i = 0; i < fwdPath.size() - 1; i++) {
         shopa.push_back(fwdPath[i]);
     }
-    for (int i = bwdPath.size(); i >= 0; i++) {
+    for (int i = bwdPath.size() - 1; i >= 0; i--) {
         shopa.push_back(bwdPath[i]);
     }
-    return ResultDTO(shopa, pathLength);
+    return std::make_pair(ResultDTO(shopa, pathLength), true);
 }
 
 bool TransitNodesQuery::lessThanNGridCellsAway(int u, int v, int n) {

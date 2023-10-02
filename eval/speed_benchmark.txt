@@ -1,14 +1,19 @@
-dijkstra: 197755934.221000ms
-tn: 1203595.229000ms
-dijkstra short range: 1014444.212000ms
-tn short range: 1015336.777000ms
-dijkstra long range: 196741490.009000ms
-tn long range: 188258.452000ms
-dijkstra  avg: 197755.934221ms
-tn avg: 1203.595229ms
-dijkstra short range avg: 16362.003419ms
-tn short range avg: 16376.399629ms
-dijkstra long range avg: 212463.812105ms
-tn long range avg: 203.302864ms
-# of long range queries: 926
-# of short range queries: 62
+dijkstra: 1701636558.180000ms
+tn: 12082703.394000ms
+dijkstra short range: 10181355.961000ms
+tn short range: 10286975.769000ms
+dijkstra 4 grid cell range: 1691455202.219000ms
+dijkstra 8 grid cell range: 1589110707.612000ms
+tn long range: 1795727.625000ms
+tn path: 513980815.790000ms
+dijkstra  avg: 170163.655818ms
+tn avg: 1208.270339ms
+dijkstra short range avg: 17893.419967ms
+tn short range avg: 18079.043531ms
+dijkstra 4 grid cells avg: 181330.960787ms
+dijkstra 8 grid cells avg: 203237.077326ms
+tn long range avg: 192.509394ms
+tn path avg: 65734.853023ms
+# of 4 grid cells queries: 9328
+# of short range queries: 569
+# of 8 grid cells queries: 7819

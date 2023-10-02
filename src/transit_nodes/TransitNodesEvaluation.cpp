@@ -17,16 +17,19 @@ void TransitNodesEvaluation::speedBenchmark() {
     std::random_device rd; // obtain a random number from hardware
     std::mt19937 gen(rd()); // seed the generator
     std::uniform_int_distribution<> distr(0, graph->nodes.size() - 1); // define the range
-    int n = 1000;
+    int n = 10000;
     auto now = std::chrono::high_resolution_clock::now();
     double total_time_dijkstra = 0;
     double total_time_tn = 0;
     double total_time_long_tn = 0;
-    double total_time_long_dijkstra = 0;
+    double total_time_dijkstra_4 = 0;
+    double total_time_dijkstra_8 = 0;
     double total_time_short_tn = 0;
     double total_time_short_dijkstra = 0;
+    double total_time_tn_path = 0;
     int n_short_queries;
     int n_long_queries;
+    int n_path_queries;
     for(int i = 0; i < n; ++i) {
         int source = distr(gen);
         int target = distr(gen);
@@ -45,40 +48,58 @@ void TransitNodesEvaluation::speedBenchmark() {
             continue;
         }
 
+        auto startTnPath = std::chrono::high_resolution_clock::now();
+        std::pair<ResultDTO, bool> resultTnPath = tnQuery.path_query(source, target);
+        auto endTnPath = std::chrono::high_resolution_clock::now();
+        double duration_tn_path = std::chrono::duration_cast<std::chrono::nanoseconds> (endTnPath-startTnPath).count();
+
         total_time_dijkstra += duration_dijkstra;
         total_time_tn += duration_tn;
         if (resultTn.long_range) {
             n_long_queries++;
-            total_time_long_dijkstra += duration_dijkstra; 
+            total_time_dijkstra_4 += duration_dijkstra; 
             total_time_long_tn += duration_tn;
         } else {
             n_short_queries++;
             total_time_short_dijkstra += duration_dijkstra;
             total_time_short_tn += duration_tn;
         }
+
+        if (resultTnPath.second && resultTnPath.first.distance != -1) {
+            n_path_queries++;
+            total_time_dijkstra_8 += duration_dijkstra;
+            total_time_tn_path += duration_tn_path;
+        }
     }
     double dijkstra_total_ms = total_time_dijkstra / 1000.0;
     double dijkstra_short_ms = total_time_short_dijkstra / 1000.0;
-    double dijkstra_long_ms = total_time_long_dijkstra / 1000.0;
+    double dijkstra4_ms = total_time_dijkstra_4 / 1000.0;
+    double dijkstra8_ms = total_time_dijkstra_8 / 1000.0;
 
     double tn_total_ms = total_time_tn / 1000.0;
     double tn_short_ms = total_time_short_tn / 1000.0;
     double tn_long_ms = total_time_long_tn / 1000.0;
+    double tn_path_ms = total_time_tn_path / 1000.0;
     std::string timeEval;
     timeEval += "dijkstra: " + std::to_string(dijkstra_total_ms) + "ms\n";
     timeEval += "tn: " + std::to_string(tn_total_ms) + "ms\n";
     timeEval += "dijkstra short range: " + std::to_string(dijkstra_short_ms) + "ms\n";
     timeEval += "tn short range: " + std::to_string(tn_short_ms) + "ms\n";
-    timeEval += "dijkstra long range: " + std::to_string(dijkstra_long_ms) + "ms\n";
+    timeEval += "dijkstra 4 grid cell range: " + std::to_string(dijkstra4_ms) + "ms\n";
+    timeEval += "dijkstra 8 grid cell range: " + std::to_string(dijkstra8_ms) + "ms\n";
     timeEval += "tn long range: " + std::to_string(tn_long_ms) + "ms\n";
+    timeEval += "tn path: " + std::to_string(tn_path_ms) + "ms\n";
     timeEval += "dijkstra  avg: "  + std::to_string(dijkstra_total_ms / static_cast<double>(n)) + "ms\n";
     timeEval += "tn avg: " + std::to_string(tn_total_ms / static_cast<double>(n)) + "ms\n";
     timeEval += "dijkstra short range avg: " + std::to_string(dijkstra_short_ms / static_cast<double>(n_short_queries)) + "ms\n";
     timeEval += "tn short range avg: " + std::to_string(tn_short_ms / static_cast<double>(n_short_queries)) + "ms\n";
-    timeEval += "dijkstra long range avg: " + std::to_string(dijkstra_long_ms / static_cast<double>(n_long_queries)) + "ms\n";
+    timeEval += "dijkstra 4 grid cells avg: " + std::to_string(dijkstra4_ms / static_cast<double>(n_long_queries)) + "ms\n";
+    timeEval += "dijkstra 8 grid cells avg: " + std::to_string(dijkstra8_ms / static_cast<double>(n_path_queries)) + "ms\n";
     timeEval += "tn long range avg: " + std::to_string(tn_long_ms / static_cast<double>(n_long_queries)) + "ms\n";
-    timeEval += "# of long range queries: " + std::to_string(n_long_queries) + "\n";
+    timeEval += "tn path avg: " + std::to_string(tn_path_ms / static_cast<double>(n_path_queries)) + "ms\n";
+    timeEval += "# of 4 grid cells queries: " + std::to_string(n_long_queries) + "\n";
     timeEval += "# of short range queries: " + std::to_string(n_short_queries) + "\n";
+    timeEval += "# of 8 grid cells queries: " + std::to_string(n_path_queries) + "\n";
 
     GeoWriter::writeToDisk(timeEval, "../eval/speed_benchmark.txt");
 }

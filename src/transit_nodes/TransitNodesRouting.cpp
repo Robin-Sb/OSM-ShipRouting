@@ -63,7 +63,7 @@ TransitNodesData TransitNodesRouting::postprocessTransitNodes() {
     for (int i = 0; i < localTransitNodes.size(); i++) {
         int cellX = UtilFunctions::getCellX(graph->nodes[i], gridsize);
         int cellY = UtilFunctions::getCellY(graph->nodes[i], gridsize);
-        std::vector<int> transitNodeDistancesOfSingleNode (transitNodesPerCell[cellX][cellY].size(), 20000000);
+        std::vector<int> transitNodeDistancesOfSingleNode (transitNodesPerCell[cellX][cellY].size(), 2000000000);
         for (int k = 0; k < transitNodesPerCell[cellX][cellY].size(); k++) {
             for (int j = 0; j < localTransitNodes[i].size(); j++) {
                 // localTransitNodes[i] contains some nodes two times -> we could just break, but try to find the issue first

@@ -24,7 +24,7 @@ using index_type = osmium::index::map::FlexMem<osmium::unsigned_object_id_type, 
 using location_handler_type = osmium::handler::NodeLocationsForWays<index_type>;
 
 const int GRIDSIZE = 96;
-const std::string GRAPH_PATH = "../graphs/graph.fmi";
+const std::string GRAPH_PATH = "../graphs/graph_1m_cut.fmi";
 const std::string TN_PATH = "../tns/transit_nodes-96.tnr";
 const bool EVAL_ON = true;
 
@@ -190,6 +190,9 @@ void tn_test(std::shared_ptr<Graph> graph, std::shared_ptr<TransitNodesData> tnD
     std::mt19937 gen(rd()); // seed the generator
     std::uniform_int_distribution<> distr(0, graph->nodes.size() - 1); // define the range
 
+
+    tnQuery.query(612259, 695730);
+    tnQuery.query(329876, 698337);
     int wrong_results;
     for(int n = 0; n < 1000; ++n) {
         int source = distr(gen);
@@ -227,7 +230,7 @@ void log_grid(int gridsize) {
             grid.push_back(std::make_pair(Vec2Sphere(lat1, lon1), Vec2Sphere(lat2, lon1)));
         }
     }
-    GeoWriter::buildGridGeoJson(grid, "../files/grid.json");;
+    GeoWriter::buildGridGeoJson(grid, "../files/grid" + std::to_string(gridsize) + ".json");
 }
 
 int main() {
@@ -248,12 +251,15 @@ int main() {
         // only generate in the first run to clear RAM
         return 0;
     }
+    tnrData.gridsize_x = GRIDSIZE;
+    tnrData.gridsize_y = GRIDSIZE;
 
     std::shared_ptr<TransitNodesData> tnr_ptr = std::make_shared<TransitNodesData>(std::move(tnrData));
     std::cout << "Run Evaluation \n";
     // tn_test(graph_ptr, tnr_ptr);
     if (EVAL_ON) {
         TransitNodesEvaluation tnEval = TransitNodesEvaluation(graph_ptr, tnr_ptr, GRIDSIZE);
+        tnEval.logCell(44, 111);
         tnEval.benchmark();
     }
     startServer(graph);

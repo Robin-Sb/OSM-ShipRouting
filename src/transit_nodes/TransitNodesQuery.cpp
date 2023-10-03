@@ -13,6 +13,7 @@ int TransitNodesQuery::query_alg(int source, int target) {
     int trgCellY = UtilFunctions::getCellY(graph->nodes[target], tnData->gridsize_y);
     
     long minDist = 2000000000;
+    bool isValid = false;
     
     for (int i = 0; i < tnData->distancesToLocalTransitNodes[source].size(); i++) {
         for (int j = 0; j < tnData->distancesToLocalTransitNodes[target].size(); j++) {
@@ -21,11 +22,18 @@ int TransitNodesQuery::query_alg(int source, int target) {
             int srcTn = tnData->transitNodesPerCell[srcCellX][srcCellY][i];
             int trgTn = tnData->transitNodesPerCell[trgCellX][trgCellY][j];
             int distBetweenTn = tnData->distancesBetweenTransitNodes[srcTn][trgTn];
+            // this is really hacky and I only do it because I don't have to hand in the code again
+            // we should rather check in preprocessing whether a node is connected
+            if ((srcToTnDist != 20000000 && srcToTnDist != 2000000000) && (trgToTnDist != 20000000 && trgToTnDist != 2000000000) && (distBetweenTn != 20000000 && distBetweenTn != 2000000000))
+                isValid = true;
             long dist = std::max(srcToTnDist + trgToTnDist + distBetweenTn, distBetweenTn);
             minDist = std::min(dist, minDist);
         }
     }
-    return minDist;
+    if (isValid)
+        return minDist;
+    else 
+        return -1;
 }
 
 TnQueryResult TransitNodesQuery::query(int source, int target) {

@@ -1,0 +1,19 @@
+dijkstra: 126300584.876000ms
+tn: 828478.692000ms
+dijkstra short range: 653805.020000ms
+tn short range: 658991.605000ms
+dijkstra 4 grid cell range: 125646779.856000ms
+dijkstra 8 grid cell range: 2605406.839000ms
+tn long range: 169487.087000ms
+tn path: 1786304.866000ms
+dijkstra  avg: 126300.584876ms
+tn avg: 828.478692ms
+dijkstra short range avg: 12819.706275ms
+tn short range avg: 12921.404020ms
+dijkstra 4 grid cells avg: 134238.012667ms
+dijkstra 8 grid cells avg: 81418.963719ms
+tn long range avg: 181.075948ms
+tn path avg: 55822.027062ms
+# of 4 grid cells queries: 936
+# of short range queries: 51
+# of 8 grid cells queries: 32

@@ -14,6 +14,8 @@ class TransitNodesEvaluation {
         void benchmark();
         void logCell(int gridCellX, int gridCellY);
         void logTns(int gridCellX, int gridCellY);
+        std::vector<std::pair<int, int>> read_permutation(std::string file_name);
+        void generate_permutation(int n_nodes, int n);
 
     private:
         std::shared_ptr<Graph> graph;

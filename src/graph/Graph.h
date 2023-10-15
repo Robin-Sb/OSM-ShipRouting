@@ -27,6 +27,7 @@ class Graph {
         std::vector<int> offsets;
         std::vector<Vec2Sphere> nodes;
         ResultDTO performDijkstraLogging(Vec2Sphere startPos, Vec2Sphere endPos);
+        int getIndex(Vec2Sphere pos);
         void trim(int minLat, int maxLat, int minLon, int maxLon);
         void generate(int n, std::vector<SingleCoast> &coastlines);
         void generate(int n, std::vector<SingleCoast> &coastlines, float minLat, float maxLat, float minLon, float maxLon);

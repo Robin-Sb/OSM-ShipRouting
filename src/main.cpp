@@ -118,10 +118,10 @@ int getEnd(std::string &query, int start) {
     return param;
 }
 
-void startServer(Graph &graph) {
+void startServer(Graph &graph, TransitNodesQuery &tnQuery) {
     SimpleWeb::Server<SimpleWeb::HTTP> server;
     server.config.port = 8080;
-    server.default_resource["GET"] = [&graph](std::shared_ptr<SimpleWeb::Server<SimpleWeb::HTTP>::Response> response, std::shared_ptr<SimpleWeb::Server<SimpleWeb::HTTP>::Request> request) {
+    server.default_resource["GET"] = [&graph, &tnQuery](std::shared_ptr<SimpleWeb::Server<SimpleWeb::HTTP>::Response> response, std::shared_ptr<SimpleWeb::Server<SimpleWeb::HTTP>::Request> request) {
         try {
             std::string query = request->query_string;
             int lat1IdxS = getStart(query, "lat1");
@@ -136,7 +136,20 @@ void startServer(Graph &graph) {
             float lat2 = std::stof(query.substr(lat2IdxS, lat2IdxE));
             float lon1 = std::stof(query.substr(lon1IdxS, lon1IdxE));
             float lon2 = std::stof(query.substr(lon2IdxS, lon2IdxE));
-            ResultDTO result = graph.performDijkstraLogging(Vec2Sphere(lat1, lon1), Vec2Sphere(lat2, lon2));
+            //ResultDTO result = graph.performDijkstraLogging(Vec2Sphere(lat1, lon1), Vec2Sphere(lat2, lon2));
+            int startIndex = graph.getIndex(Vec2Sphere(lat1, lon1));
+            int endIndex = graph.getIndex(Vec2Sphere(lat2, lon2));
+            auto startTn = std::chrono::high_resolution_clock::now();
+            ResultDTO result = tnQuery.path_query(startIndex, endIndex).first; 
+            auto endTn = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double> elapsed_seconds = endTn-startTn;
+            std::cout << "elapsed time tn: " << elapsed_seconds.count() << "s" << std::endl;
+            auto startdj = std::chrono::high_resolution_clock::now();
+            graph.dijkstra(startIndex, endIndex); 
+            auto enddj = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double> elapsed_seconds_dj = enddj-startdj;
+            std::cout << "elapsed time dijkstra: " << elapsed_seconds_dj.count() << "s" << std::endl;
+
             std::vector<Vec2Sphere> path;
             for (int i = 0; i < result.path.size(); i++) 
                 path.push_back(graph.nodes[result.path[i]]);
@@ -234,6 +247,7 @@ void log_grid(int gridsize) {
 }
 
 int main() {
+    log_grid(GRIDSIZE);
     Graph graph = Graph();
     if (checkIfFileExists(GRAPH_PATH)) {
         graph.buildFromFMI(GRAPH_PATH);
@@ -259,10 +273,14 @@ int main() {
     // tn_test(graph_ptr, tnr_ptr);
     if (EVAL_ON) {
         TransitNodesEvaluation tnEval = TransitNodesEvaluation(graph_ptr, tnr_ptr, GRIDSIZE);
-        tnEval.logCell(44, 111);
-        tnEval.benchmark();
+        if (!checkIfFileExists("../files/permutation.txt")) {
+            tnEval.generate_permutation(graph.nodes.size(), 1000);
+        }
+        //tnEval.logCell(44, 111);
+        //tnEval.benchmark();
     }
-    startServer(graph);
+    TransitNodesQuery tnQuery = TransitNodesQuery(graph_ptr, tnr_ptr);
+    startServer(graph, tnQuery);
 
     return 0;
 }

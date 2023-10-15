@@ -12,12 +12,36 @@ void TransitNodesEvaluation::benchmark() {
     speedBenchmark();
 }
 
-void TransitNodesEvaluation::speedBenchmark() {
-    TransitNodesQuery tnQuery = TransitNodesQuery(graph, tnData);
+void TransitNodesEvaluation::generate_permutation(int n_nodes, int n) {
     std::random_device rd; // obtain a random number from hardware
     std::mt19937 gen(rd()); // seed the generator
-    std::uniform_int_distribution<> distr(0, graph->nodes.size() - 1); // define the range
-    int n = 10000;
+    std::uniform_int_distribution<> distr(0, n_nodes - 1); // define the range
+    std::string out;
+    for(int i = 0; i < n; ++i) {
+        int source = distr(gen);
+        int target = distr(gen);
+        out += std::to_string(source) + " " + std::to_string(target) + "\n";
+    }
+    GeoWriter::writeToDisk(out, "../files/permutation.txt");
+}
+
+std::vector<std::pair<int, int>> TransitNodesEvaluation::read_permutation(std::string file_name) {
+    std::ifstream infile(file_name);
+    std::vector<std::pair<int, int>> permutation;
+    int source, target;
+    while (infile >> source >> target) {
+        permutation.push_back(std::make_pair(source, target));
+    }
+    return permutation;
+}
+
+void TransitNodesEvaluation::speedBenchmark() {
+    TransitNodesQuery tnQuery = TransitNodesQuery(graph, tnData);
+    std::vector<std::pair<int, int>> permutation = read_permutation("../files/permutation.txt");
+    // std::random_device rd; // obtain a random number from hardware
+    // std::mt19937 gen(rd()); // seed the generator
+    // std::uniform_int_distribution<> distr(0, graph->nodes.size() - 1); // define the range
+    int n = 1000;
     auto now = std::chrono::high_resolution_clock::now();
     double total_time_dijkstra = 0;
     double total_time_tn = 0;
@@ -30,9 +54,9 @@ void TransitNodesEvaluation::speedBenchmark() {
     int n_short_queries;
     int n_long_queries;
     int n_path_queries;
-    for(int i = 0; i < n; ++i) {
-        int source = distr(gen);
-        int target = distr(gen);
+    for(int i = 0; i < permutation.size(); ++i) {
+        int source = permutation[i].first;
+        int target = permutation[i].second;
         auto startTn = std::chrono::high_resolution_clock::now();
         TnQueryResult resultTn = tnQuery.query(source, target);
         auto endTn = std::chrono::high_resolution_clock::now();

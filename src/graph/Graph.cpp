@@ -57,6 +57,10 @@ void Graph::trim(int minLat, int maxLat, int minLon, int maxLon) {
     offsets = newOffsets;
 }
 
+int Graph::getIndex(Vec2Sphere pos) {
+    return sGrid->findClosestPoint(pos);
+}
+
 ResultDTO Graph::performDijkstraLogging(Vec2Sphere startPos, Vec2Sphere endPos) {
     // start the search with the node closest to the selected position
     auto startNodeSearch = std::chrono::system_clock::now();
